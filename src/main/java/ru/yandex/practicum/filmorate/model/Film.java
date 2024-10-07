@@ -1,6 +1,6 @@
 package ru.yandex.practicum.filmorate.model;
 
-import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
@@ -15,7 +15,7 @@ public class Film {
 
     private Integer id;
 
-    @NotEmpty(message = "Название не может быть пустым!")
+    @NotBlank(message = "Название не может быть пустым!")
     private String name;
 
     @Size(max = MAX_SIZE_DESCRIPTION, message = "Максимальная длина описания — " + MAX_SIZE_DESCRIPTION + " символов!")

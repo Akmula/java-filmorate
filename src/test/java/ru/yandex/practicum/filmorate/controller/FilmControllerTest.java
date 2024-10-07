@@ -25,6 +25,5 @@ public class FilmControllerTest {
                 .releaseDate(LocalDate.parse("1002-12-12"))
                 .build();
         assertThrows(ValidationException.class, () -> filmController.createFilm(film));
-        System.out.println(filmController.getFilms());
     }
 }

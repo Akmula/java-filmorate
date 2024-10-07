@@ -15,58 +15,61 @@ import java.util.Map;
 @RequestMapping("/users")
 public class UserController {
 
+    protected Integer userId = 0;
     private final Map<Integer, User> users = new HashMap<>();
 
     @PostMapping
     public User createUser(@Valid @RequestBody User user) {
+        log.info("Запрос POST /users - добавить пользователя: {}", user);
         if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
         }
+        log.debug("Валидация пользователя {}", user);
         validateUser(user);
         user.setId(getNextId());
         users.put(user.getId(), user);
+        log.info("Ответ POST /users: {}", user);
         return user;
     }
 
-    @PutMapping
+    @PutMapping()
     public User updateUser(@Valid @RequestBody User newUser) {
+        log.info("Запрос PUT /users - обновить пользователя: {}", newUser);
+        log.debug("Проверка ID пользователя {}", newUser);
         if (newUser.getId() == null) {
+            log.error("Пользователь {} не найден!", (Object) null);
             throw new ValidationException("Id должен быть указан!");
         }
         if (users.containsKey(newUser.getId())) {
+            log.debug("Проверка пользователя {}", newUser);
             validateUser(newUser);
             User oldUser = users.get(newUser.getId());
-            oldUser.setEmail(newUser.getEmail());
-            oldUser.setLogin(newUser.getLogin());
-            oldUser.setBirthday(newUser.getBirthday());
 
             if (newUser.getName() == null || newUser.getName().isBlank()) {
-                oldUser.setName(newUser.getLogin());
-            } else {
-                oldUser.setName(newUser.getName());
+                newUser.setName(oldUser.getLogin());
             }
-            return oldUser;
+            users.put(oldUser.getId(), newUser);
+            log.info("Ответ PUT /users - обновленный пользователь: {}", newUser);
+            return newUser;
         }
+        log.error("Ответ PUT /users - Пользователь с id = {} не найден!", newUser.getId());
         throw new ValidationException("Пользователь с id = " + newUser.getId() + " не найден!");
     }
 
     @GetMapping
     public Collection<User> getUsers() {
+        log.info("GET /users - получение всех пользователей.");
         return users.values();
     }
 
     private void validateUser(User user) {
         if (user.getLogin().contains(" ")) {
+            log.error("Валидация пользователя {} не пройдена", user);
             throw new ValidationException("Логин не может быть пустым и содержать пробелы!");
         }
     }
 
-    private int getNextId() {
-        int currentMaxId = users.keySet()
-                .stream()
-                .mapToInt(id -> id)
-                .max()
-                .orElse(0);
-        return ++currentMaxId;
+    private Integer getNextId() {
+        return ++userId;
     }
 }
