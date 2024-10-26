@@ -5,35 +5,40 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.IdGenerator;
+import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
-
 public class UserControllerTest {
-    UserController userController;
+    IdGenerator idGeneratorUser;
+    UserStorage userStorage;
+    private UserController userController;
 
     @BeforeEach
     public void setUp() {
+        idGeneratorUser = new IdGenerator();
+        userStorage = new InMemoryUserStorage(idGeneratorUser);
         userController = new UserController();
     }
 
     @Test
     public void whenTheLoginEnteredWithASpaceThrowAnValidationException() {
         User user = User.builder()
-                .login("Qwe rty")
+                .email("qwerty@qwerty.ru")
+                .login("Qwer ty")
                 .build();
-
-        assertThrows(ValidationException.class, () -> userController.createUser(user));
+        assertThrows(ValidationException.class, () -> userController.createUser(userStorage.saveUser(user)));
     }
 
     @Test
-    public void whenAnInvalidIdIsEnteredThrowAnValidationException() {
+    public void whenTheEmailIncorrectThrowAnValidationException() {
         User user = User.builder()
-                .email("Qwerty@qwerty.ru")
+                .email("qwerty@qwerty")
                 .login("Qwerty")
                 .build();
-
-        assertThrows(ValidationException.class, () -> userController.updateUser(user));
+        assertThrows(ValidationException.class, () -> userController.createUser(userStorage.saveUser(user)));
     }
 }

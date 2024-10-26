@@ -7,12 +7,12 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.util.Set;
 
 @Data
 @Builder
 public class Film {
     private static final int MAX_SIZE_DESCRIPTION = 200;
-
     private Integer id;
 
     @NotBlank(message = "Название не может быть пустым!")
@@ -20,9 +20,21 @@ public class Film {
 
     @Size(max = MAX_SIZE_DESCRIPTION, message = "Максимальная длина описания — " + MAX_SIZE_DESCRIPTION + " символов!")
     private String description;
-
     private LocalDate releaseDate;
 
     @Positive(message = "Продолжительность фильма должна быть положительным числом!")
     private Integer duration;
+    private Set<Integer> likes;
+
+    public void addLike(Integer id) {
+        this.likes.add(id);
+    }
+
+    public void deleteLike(Integer id) {
+        this.likes.remove(id);
+    }
+
+    public Integer getLikesSize() {
+        return likes.size();
+    }
 }
