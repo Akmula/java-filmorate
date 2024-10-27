@@ -4,9 +4,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exceptions.UserNotFoundException;
+import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -16,6 +19,24 @@ import java.util.stream.Collectors;
 @Service
 public class UserService {
     private final UserStorage userStorage;
+
+    public User saveUser(User user) {
+        validateUser(user);
+        return userStorage.saveUser(user);
+    }
+
+    public User updateUser(User user) {
+        validateUser(user);
+        return userStorage.updateUser(user);
+    }
+
+    public Collection<User> getAllUsers() {
+        return userStorage.getAllUsers();
+    }
+
+    public User getUserById(Integer id) {
+        return userStorage.getUserById(id);
+    }
 
     public User addFriend(Integer userId, Integer friendId) {
         validate(userId, friendId);
@@ -63,6 +84,22 @@ public class UserService {
         }
         if (userStorage.getUserById(friendId) == null) {
             throw new UserNotFoundException(friendId);
+        }
+
+    }
+
+    private void validateUser(User user) {
+        if (user.getLogin().contains(" ")) {
+            throw new ValidationException("Логин не может быть пустым и содержать пробелы!");
+        }
+        if (!user.getEmail().contains(".")) {
+            throw new ValidationException("Неверно указана почта.");
+        }
+        if (user.getName() == null || user.getName().isBlank()) {
+            user.setName(user.getLogin());
+        }
+        if (user.getFriends() == null) {
+            user.setFriends(new HashSet<>());
         }
     }
 }

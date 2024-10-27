@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.service.IdGenerator;
+import ru.yandex.practicum.filmorate.service.user.UserService;
 import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
@@ -13,15 +13,15 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
 public class UserControllerTest {
-    IdGenerator idGeneratorUser;
     UserStorage userStorage;
+    UserService userService;
     private UserController userController;
 
     @BeforeEach
     public void setUp() {
-        idGeneratorUser = new IdGenerator();
-        userStorage = new InMemoryUserStorage(idGeneratorUser);
-        userController = new UserController();
+        userStorage = new InMemoryUserStorage();
+        userService = new UserService(userStorage);
+        userController = new UserController(userService);
     }
 
     @Test
@@ -30,7 +30,7 @@ public class UserControllerTest {
                 .email("qwerty@qwerty.ru")
                 .login("Qwer ty")
                 .build();
-        assertThrows(ValidationException.class, () -> userController.createUser(userStorage.saveUser(user)));
+        assertThrows(ValidationException.class, () -> userController.createUser(user));
     }
 
     @Test
@@ -39,6 +39,6 @@ public class UserControllerTest {
                 .email("qwerty@qwerty")
                 .login("Qwerty")
                 .build();
-        assertThrows(ValidationException.class, () -> userController.createUser(userStorage.saveUser(user)));
+        assertThrows(ValidationException.class, () -> userController.createUser(user));
     }
 }

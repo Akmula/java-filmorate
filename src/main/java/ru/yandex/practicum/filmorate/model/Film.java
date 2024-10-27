@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
@@ -24,17 +25,18 @@ public class Film {
 
     @Positive(message = "Продолжительность фильма должна быть положительным числом!")
     private Integer duration;
+
+    @JsonIgnore
     private Set<Integer> likes;
+    private Integer rate;
 
     public void addLike(Integer id) {
         this.likes.add(id);
+        this.rate = likes.size();
     }
 
     public void deleteLike(Integer id) {
         this.likes.remove(id);
-    }
-
-    public Integer getLikesSize() {
-        return likes.size();
+        this.rate = likes.size();
     }
 }

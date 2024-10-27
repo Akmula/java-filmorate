@@ -5,9 +5,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.service.IdGenerator;
+import ru.yandex.practicum.filmorate.service.film.FilmService;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
+import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
 
@@ -15,15 +17,17 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
 public class FilmControllerTest {
-    IdGenerator idGeneratorFilm;
     FilmStorage filmStorage;
+    UserStorage userStorage;
+    FilmService filmService;
     private FilmController filmController;
 
     @BeforeEach
     public void setUp() {
-        idGeneratorFilm = new IdGenerator();
-        filmStorage = new InMemoryFilmStorage(idGeneratorFilm);
-        filmController = new FilmController();
+        filmStorage = new InMemoryFilmStorage();
+        userStorage = new InMemoryUserStorage();
+        filmService = new FilmService(filmStorage, userStorage);
+        filmController = new FilmController(filmService);
     }
 
     @Test
@@ -36,7 +40,7 @@ public class FilmControllerTest {
                 .releaseDate(LocalDate.parse("1984-10-26"))
                 .duration(108)
                 .build();
-        assertThrows(ValidationException.class, () -> filmController.createFilm(filmStorage.saveFilm(film)));
+        assertThrows(ValidationException.class, () -> filmController.createFilm(film));
     }
 
     @Test
@@ -49,7 +53,7 @@ public class FilmControllerTest {
                 .releaseDate(LocalDate.parse("1984-10-26"))
                 .duration(108)
                 .build();
-        assertThrows(ValidationException.class, () -> filmController.createFilm(filmStorage.saveFilm(film)));
+        assertThrows(ValidationException.class, () -> filmController.createFilm(film));
     }
 
     @Test
@@ -62,7 +66,7 @@ public class FilmControllerTest {
                 .releaseDate(LocalDate.parse("1084-10-26"))
                 .duration(108)
                 .build();
-        assertThrows(ValidationException.class, () -> filmController.createFilm(filmStorage.saveFilm(film)));
+        assertThrows(ValidationException.class, () -> filmController.createFilm(film));
     }
 
     @Test
@@ -75,6 +79,6 @@ public class FilmControllerTest {
                 .releaseDate(LocalDate.parse("1984-10-26"))
                 .duration(0)
                 .build();
-        assertThrows(ValidationException.class, () -> filmController.createFilm(filmStorage.saveFilm(film)));
+        assertThrows(ValidationException.class, () -> filmController.createFilm(film));
     }
 }
