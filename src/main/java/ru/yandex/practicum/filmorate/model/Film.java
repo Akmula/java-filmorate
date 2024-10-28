@@ -4,14 +4,18 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.util.Set;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Film {
     private static final int MAX_SIZE_DESCRIPTION = 200;
     private Integer id;
@@ -28,6 +32,8 @@ public class Film {
 
     @JsonIgnore
     private Set<Integer> likes;
+
+    @JsonIgnore
     private Integer rate;
 
     public void addLike(Integer id) {

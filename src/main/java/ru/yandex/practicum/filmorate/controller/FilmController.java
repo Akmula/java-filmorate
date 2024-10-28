@@ -24,56 +24,57 @@ public class FilmController {
     @PostMapping
     public ResponseEntity<Film> createFilm(@Valid @RequestBody Film film) {
         log.info("POST /films - Запрос на добавление фильма: {}", film);
-        Film addedFilm = filmService.saveFilm(film);
-        log.info("POST /films - Ответ на добавление фильма: {}", addedFilm);
-        return ResponseEntity.ok(addedFilm);
+        Film response = filmService.saveFilm(film);
+        log.info("POST /films - Ответ на добавление фильма: {}", response);
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping
     public ResponseEntity<Film> updateFilm(@Valid @RequestBody Film film) {
+        System.out.println("qwewerr");
         log.info("PUT /films - Запрос на обновление фильма: {}", film);
-        Film updatedFilm = filmService.updateFilm(film);
-        log.info("PUT /films - Ответ на обновление фильма: {}", updatedFilm);
-        return ResponseEntity.ok(filmService.updateFilm(film));
+        Film response = filmService.updateFilm(film);
+        log.info("PUT /films - Ответ на обновление фильма: {}", response);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping
     public ResponseEntity<Collection<Film>> getFilms() {
         log.info("GET /films - Запрос на получение фильмов");
-        Integer numberOfFilms = filmService.getAllFilms().size();
-        log.info("GET /films - В ответ на получение фильмов, отправлено {} фильмов.", numberOfFilms);
-        return ResponseEntity.ok(filmService.getAllFilms());
+        Collection<Film> response = filmService.getAllFilms();
+        log.info("GET /films - Ответ на получение фильмов: {}", response);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{filmId}")
     public ResponseEntity<Film> getFilmById(@PathVariable Integer filmId) {
         log.info("GET /films - Запрос на получение фильма по id: {}", filmId);
-        Film film = filmService.getFilmById(filmId);
-        log.info("GET /films - Ответ на получение фильма по id: {}", film);
-        return ResponseEntity.ok(film);
+        Film response = filmService.getFilmById(filmId);
+        log.info("GET /films - Ответ на получение фильма по id: {}", response);
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{filmId}/like/{userId}")
     public ResponseEntity<Film> addLike(@PathVariable Integer filmId, @PathVariable Integer userId) {
         log.info("PUT /films - Запрос на добавление лайка фильму id: {}, от пользователя: {}", filmId, userId);
-        Film film = filmService.addLike(filmId, userId);
-        log.info("PUT /films - Фильму с id - {}, поставлен лайк от пользователя с id - {}.", filmId, userId);
-        return ResponseEntity.ok(film);
+        Film response = filmService.addLike(filmId, userId);
+        log.info("PUT /films - Фильму - {}, поставлен лайк от пользователя с id - {}.", response, userId);
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{filmId}/like/{userId}")
     public ResponseEntity<Film> deleteLike(@PathVariable Integer filmId, @PathVariable Integer userId) {
         log.info("DELETE /films - Запрос на удаление лайка у фильма id: {}, от пользователя: {}", filmId, userId);
-        Film film = filmService.deleteLike(filmId, userId);
-        log.info("DELETE /films - У фильма с id - {}, удален лайк пользователем с id - {}.", filmId, userId);
-        return ResponseEntity.ok(film);
+        Film response = filmService.deleteLike(filmId, userId);
+        log.info("DELETE /films - У фильма - {}, удален лайк пользователем с id - {}.", response, userId);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/popular")
     public ResponseEntity<Collection<Film>> getPopular(@RequestParam(defaultValue = "10") Integer count) {
         log.info("GET /films - Запрос на получение популярных фильмов. Выводить: {} фильмов", count);
-        Integer numberOfFilms = filmService.getPopular(count).size();
-        log.info("GET /films - Ответ на получение популярных фильмов. Вывод в кол-ве {} фильмов", numberOfFilms);
-        return ResponseEntity.ok(filmService.getPopular(count));
+        Collection<Film> response = filmService.getPopular(count);
+        log.info("GET /films - Ответ на получение популярных фильмов: {}", response);
+        return ResponseEntity.ok(response);
     }
 }
