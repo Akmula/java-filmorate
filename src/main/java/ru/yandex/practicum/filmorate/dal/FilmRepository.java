@@ -58,7 +58,6 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
         this.filmGenreRepository = filmGenreRepository;
     }
 
-
     @Override
     public Film createFilm(Film film) {
         log.debug("FilmRepository - Добавление фильма {} в базу", film);
