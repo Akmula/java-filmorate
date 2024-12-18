@@ -3,8 +3,11 @@ package ru.yandex.practicum.filmorate.controller;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import ru.yandex.practicum.filmorate.dal.GenreRepository;
+import ru.yandex.practicum.filmorate.dal.LikeRepository;
+import ru.yandex.practicum.filmorate.dal.MPARepository;
+import ru.yandex.practicum.filmorate.dto.FilmRequest;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
-import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.film.FilmService;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
@@ -20,19 +23,22 @@ public class FilmControllerTest {
     FilmStorage filmStorage;
     UserStorage userStorage;
     FilmService filmService;
+    MPARepository mpaRepository;
+    LikeRepository likeRepository;
+    GenreRepository genreRepository;
     private FilmController filmController;
 
     @BeforeEach
     public void setUp() {
         filmStorage = new InMemoryFilmStorage();
         userStorage = new InMemoryUserStorage();
-        filmService = new FilmService(filmStorage, userStorage);
+        filmService = new FilmService(filmStorage, userStorage, mpaRepository, genreRepository, likeRepository);
         filmController = new FilmController(filmService);
     }
 
     @Test
     public void whenTheNameIsIncorrectWeThrowAnValidationException() {
-        Film film = Film.builder()
+        FilmRequest filmRequest = FilmRequest.builder()
                 .name("")
                 .description("История противостояния солдата Кайла Риза и киборга-терминатора," +
                         " прибывших в 1984 год из пост-апокалиптического будущего, где миром правят машины-убийцы," +
@@ -40,12 +46,12 @@ public class FilmControllerTest {
                 .releaseDate(LocalDate.parse("1984-10-26"))
                 .duration(108)
                 .build();
-        assertThrows(ValidationException.class, () -> filmController.createFilm(film));
+        assertThrows(ValidationException.class, () -> filmController.createFilm(filmRequest));
     }
 
     @Test
     public void whenTheDescriptionIsMoreThan200CharactersWeThrowAnValidationException() {
-        Film film = Film.builder()
+        FilmRequest filmRequest = FilmRequest.builder()
                 .name("Терминатор")
                 .description("История противостояния солдата Кайла Риза и киборга-терминатора," +
                         " прибывших в 1984 год из пост-апокалиптического будущего, где миром правят машины-убийцы," +
@@ -53,12 +59,12 @@ public class FilmControllerTest {
                 .releaseDate(LocalDate.parse("1984-10-26"))
                 .duration(108)
                 .build();
-        assertThrows(ValidationException.class, () -> filmController.createFilm(film));
+        assertThrows(ValidationException.class, () -> filmController.createFilm(filmRequest));
     }
 
     @Test
     public void whenReleaseDateIsEnteredIncorrectlyWeThrowAnValidationException() {
-        Film film = Film.builder()
+        FilmRequest filmRequest = FilmRequest.builder()
                 .name("Терминатор")
                 .description("История противостояния солдата Кайла Риза и киборга-терминатора," +
                         " прибывших в 1984 год из пост-апокалиптического будущего, где миром правят машины-убийцы," +
@@ -66,12 +72,12 @@ public class FilmControllerTest {
                 .releaseDate(LocalDate.parse("1084-10-26"))
                 .duration(108)
                 .build();
-        assertThrows(ValidationException.class, () -> filmController.createFilm(film));
+        assertThrows(ValidationException.class, () -> filmController.createFilm(filmRequest));
     }
 
     @Test
     public void whenTheDurationIsEqualToOrLessThan0WeThrowAnValidationException() {
-        Film film = Film.builder()
+        FilmRequest filmRequest = FilmRequest.builder()
                 .name("Терминатор")
                 .description("История противостояния солдата Кайла Риза и киборга-терминатора," +
                         " прибывших в 1984 год из пост-апокалиптического будущего, где миром правят машины-убийцы," +
@@ -79,6 +85,6 @@ public class FilmControllerTest {
                 .releaseDate(LocalDate.parse("1984-10-26"))
                 .duration(0)
                 .build();
-        assertThrows(ValidationException.class, () -> filmController.createFilm(film));
+        assertThrows(ValidationException.class, () -> filmController.createFilm(filmRequest));
     }
 }

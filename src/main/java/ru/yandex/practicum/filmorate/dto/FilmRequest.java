@@ -1,23 +1,20 @@
-package ru.yandex.practicum.filmorate.model;
+package ru.yandex.practicum.filmorate.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.MPA;
 
 import java.time.LocalDate;
 import java.util.Collection;
-import java.util.Set;
 
 @Data
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class Film {
+public class FilmRequest {
     private static final int MAX_SIZE_DESCRIPTION = 200;
     private Integer id;
 
@@ -30,12 +27,9 @@ public class Film {
 
     @Positive(message = "Продолжительность фильма должна быть положительным числом!")
     private Integer duration;
+
+    @NotNull(message = "mpaId не может быть пустым!")
     private MPA mpa;
 
     private Collection<Genre> genres;
-
-    @JsonIgnore
-    private Set<Integer> likes;
-
-    private Integer rate;
 }

@@ -6,9 +6,7 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exceptions.FilmNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -18,7 +16,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     private Integer filmId = 0;
 
     @Override
-    public Film saveFilm(Film film) {
+    public Film createFilm(Film film) {
         if (film.getId() == null || film.getId() <= 0) {
             film.setId(++filmId);
             log.info("Фильму присвоен id - {}", film.getId());
@@ -37,15 +35,30 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
-    public Film getFilmById(Integer id) {
+    public Optional<Film> getFilmById(Integer id) {
         if (!films.containsKey(id)) {
             throw new FilmNotFoundException(id);
         }
-        return films.get(id);
+        return Optional.ofNullable(films.get(id));
     }
 
     @Override
     public Collection<Film> getAllFilms() {
         return films.values();
+    }
+
+    @Override
+    public void addLikeFilm(Integer userId, Integer filmId) {
+
+    }
+
+    @Override
+    public void deleteLikeFilm(Integer userId, Integer filmId) {
+
+    }
+
+    @Override
+    public Collection<Film> getPopularFilms(Integer count) {
+        return List.of();
     }
 }

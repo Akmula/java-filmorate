@@ -6,19 +6,17 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exceptions.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
-@RequiredArgsConstructor
 @Component
+@RequiredArgsConstructor
 public class InMemoryUserStorage implements UserStorage {
     private final Map<Integer, User> users = new HashMap<>();
     private Integer userId = 0;
 
     @Override
-    public User saveUser(User user) {
+    public User createUser(User user) {
         if (user.getId() == null || user.getId() == 0) {
             user.setId(++userId);
             log.info("Пользователю присвоен id - {}", user.getId());
@@ -39,17 +37,38 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public User getUserById(Integer id) {
+    public Optional<User> getUserById(Integer id) {
         if (!users.containsKey(id)) {
             throw new UserNotFoundException(id);
         }
         log.info("Ответ на запрос получения пользователя по id - {}", users.get(id));
-        return users.get(id);
+        return Optional.ofNullable(users.get(id));
+    }
+
+    @Override
+    public Optional<User> getUserByLogin(String login) {
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<User> getUserByEmail(String email) {
+        return Optional.empty();
     }
 
     @Override
     public Collection<User> getAllUsers() {
-        log.info("Ответ на запрос получения всех пользователей. Кол-во - {}", users.values().size());
+        log.info("Ответ на запрос получения всех пользователей. Кол-во - {}", users.size());
         return users.values();
     }
+
+    @Override
+    public Collection<User> getUserFriends(Integer id) {
+        return List.of();
+    }
+
+    @Override
+    public Collection<User> getCommonFriends(Integer userId, Integer otherId) {
+        return List.of();
+    }
+
 }
