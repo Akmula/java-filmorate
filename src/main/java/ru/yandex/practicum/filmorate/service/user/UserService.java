@@ -10,6 +10,7 @@ import ru.yandex.practicum.filmorate.exceptions.InternalServerException;
 import ru.yandex.practicum.filmorate.exceptions.UserNotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.UserMapper;
+import ru.yandex.practicum.filmorate.model.Friendship;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.FriendshipStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
@@ -17,6 +18,7 @@ import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -52,7 +54,15 @@ public class UserService {
     public Collection<UserDto> getAllUsers() {
         log.info("UserService - Получение всех пользователей");
         Collection<UserDto> usersDto = UserMapper.mapToUserDtoList(userStorage.getAllUsers());
-        usersDto.forEach(userDto -> userDto.setFriends(friendshipStorage.getFriendsIds(userDto.getId())));
+        Collection<Friendship> friendships = friendshipStorage.getFriendship();
+
+        usersDto.forEach(userDto -> {
+            Set<Integer> friendshipIds = friendships.stream()
+                    .filter(friendship -> friendship.getUserId().equals(userDto.getId()))
+                    .map(Friendship::getFriendId)
+                    .collect(Collectors.toSet());
+            userDto.setFriends(friendshipIds);
+        });
         log.info("UserService - Список всех пользователей получен");
         return usersDto;
     }

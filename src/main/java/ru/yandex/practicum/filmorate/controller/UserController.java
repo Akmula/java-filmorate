@@ -3,7 +3,6 @@ package ru.yandex.practicum.filmorate.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.dto.UserDto;
 import ru.yandex.practicum.filmorate.dto.UserRequest;
@@ -21,59 +20,59 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping
-    public ResponseEntity<UserDto> createUser(@Valid @RequestBody UserRequest userRequest) {
+    public UserDto createUser(@Valid @RequestBody UserRequest userRequest) {
         log.info("POST /users - Запрос на добавление пользователя: {}", userRequest);
         UserDto userDto = userService.createUser(userRequest);
         log.info("POST /films - Ответ на добавление пользователя: {}", userDto);
-        return ResponseEntity.ok(userDto);
+        return userDto;
     }
 
     @PutMapping
-    public ResponseEntity<UserDto> updateUser(@Valid @RequestBody UserRequest userRequest) {
+    public UserDto updateUser(@Valid @RequestBody UserRequest userRequest) {
         log.info("PUT /users - Запрос на обновление пользователя: {}", userRequest);
         UserDto userDto = userService.updateUser(userRequest);
         log.info("PUT /films - Ответ на обновление пользователя: {}", userDto);
-        return ResponseEntity.ok(userDto);
+        return userDto;
     }
 
     @GetMapping
-    public ResponseEntity<Collection<UserDto>> getUsers() {
+    public Collection<UserDto> getUsers() {
         log.info("GET /users - Запрос на получение пользователей");
-        return ResponseEntity.ok(userService.getAllUsers());
+        return userService.getAllUsers();
     }
 
     @GetMapping("/{userId}")
-    public ResponseEntity<UserDto> getUserById(@PathVariable Integer userId) {
+    public UserDto getUserById(@PathVariable int userId) {
         log.info("GET /users - Запрос на получение пользователя по id: {}", userId);
         UserDto userDto = userService.getUserById(userId);
         log.info("GET /films - Ответ на получение пользователя по id: {}", userDto);
-        return ResponseEntity.ok(userDto);
+        return userDto;
     }
 
     @PutMapping("/{userId}/friends/{friendId}")
-    public ResponseEntity<UserDto> addFriend(@PathVariable Integer userId, @PathVariable Integer friendId) {
+    public UserDto addFriend(@PathVariable int userId, @PathVariable int friendId) {
         log.info("PUT /users - Запрос на добавление в друзья пользователя с id: {}," +
                 " от пользователя: {}", friendId, userId);
-        return ResponseEntity.ok(userService.addFriend(userId, friendId));
+        return userService.addFriend(userId, friendId);
     }
 
     @GetMapping("/{userId}/friends")
-    public ResponseEntity<Collection<UserDto>> getFriends(@PathVariable Integer userId) {
+    public Collection<UserDto> getFriends(@PathVariable int userId) {
         log.info("GET /users - Запрос на получение друзей пользователя с id: {}", userId);
-        return ResponseEntity.ok(userService.getFriends(userId));
+        return userService.getFriends(userId);
     }
 
     @DeleteMapping("/{userId}/friends/{friendId}")
-    public ResponseEntity<UserDto> deleteFriend(@PathVariable Integer userId, @PathVariable Integer friendId) {
+    public UserDto deleteFriend(@PathVariable int userId, @PathVariable int friendId) {
         log.info("DELETE /users - Запрос на удаление из друзей пользователя с id: {}," +
                 " от пользователя: {}", friendId, userId);
-        return ResponseEntity.ok(userService.deleteFriend(userId, friendId));
+        return userService.deleteFriend(userId, friendId);
     }
 
     @GetMapping("/{userId}/friends/common/{otherId}")
-    public ResponseEntity<Collection<UserDto>> getCommonFriends(@PathVariable Integer userId, @PathVariable Integer otherId) {
+    public Collection<UserDto> getCommonFriends(@PathVariable int userId, @PathVariable int otherId) {
         log.info("GET /users - Запрос на получение общих друзей пользователя с id: {}," +
                 " с пользователем id: {}", userId, otherId);
-        return ResponseEntity.ok(userService.getCommonFriends(userId, otherId));
+        return userService.getCommonFriends(userId, otherId);
     }
 }

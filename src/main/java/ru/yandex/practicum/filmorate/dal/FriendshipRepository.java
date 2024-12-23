@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.Friendship;
 import ru.yandex.practicum.filmorate.storage.user.FriendshipStorage;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -19,6 +20,11 @@ public class FriendshipRepository extends BaseRepository<Friendship> implements 
             INSERT INTO FRIENDSHIP
             (user_id, friend_id, is_friend)
             VALUES (?, ?, ?)
+            """;
+
+    private static final String GET_FRIENDSHIP_QUERY = """
+            SELECT *
+            FROM FRIENDSHIP
             """;
 
     private static final String GET_FRIENDS_ID_QUERY = """
@@ -59,6 +65,12 @@ public class FriendshipRepository extends BaseRepository<Friendship> implements 
     public void deleteFriend(Integer userId, Integer friendId) {
         log.info("FriendshipRepository - Удаление пользователя с id - {} из друзей", friendId);
         delete(DELETE_FRIENDSHIP_QUERY, userId, friendId);
+    }
+
+    @Override
+    public Collection<Friendship> getFriendship() {
+        log.info("FriendshipRepository - Получение списка дружб");
+        return getAll(GET_FRIENDSHIP_QUERY);
     }
 
     @Override

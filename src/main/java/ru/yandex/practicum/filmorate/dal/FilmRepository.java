@@ -8,8 +8,11 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -52,7 +55,8 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
             LIMIT ?
             """;
 
-    public FilmRepository(JdbcTemplate jdbcTemplate, RowMapper<Film> filmRowMapper, LikeRepository likeRepository, FilmGenreRepository filmGenreRepository) {
+    public FilmRepository(JdbcTemplate jdbcTemplate, RowMapper<Film> filmRowMapper,
+                          LikeRepository likeRepository, FilmGenreRepository filmGenreRepository) {
         super(jdbcTemplate, filmRowMapper);
         this.likeRepository = likeRepository;
         this.filmGenreRepository = filmGenreRepository;
@@ -70,13 +74,7 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
                 film.getMpa().getId()
         );
         film.setId(id);
-        if (film.getGenres() != null) {
-            for (Genre genre : film.getGenres()) {
-                if (filmGenreRepository.getGenresForFilm(film.getId(), genre.getId()).isEmpty()) {
-                    filmGenreRepository.addFilmGenre(film.getId(), genre.getId());
-                }
-            }
-        }
+        setGenresForFilm(film);
         log.info("FilmRepository - Фильм {} добавлен в базу данных", film);
         return film;
     }
@@ -91,13 +89,7 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
                 film.getDuration(),
                 film.getMpa().getId(),
                 film.getId());
-        if (film.getGenres() != null && !film.getGenres().isEmpty()) {
-            for (Genre genre : film.getGenres()) {
-                if (filmGenreRepository.getGenresForFilm(film.getId(), genre.getId()).isPresent()) {
-                    filmGenreRepository.updateFilmGenres(film.getId(), genre.getId());
-                }
-            }
-        }
+        setGenresForFilm(film);
         log.info("FilmRepository - Фильм {} обновлен в базе данных", film);
         return film;
     }
@@ -132,5 +124,14 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     public Collection<Film> getPopularFilms(Integer count) {
         log.info("FilmRepository - Получение популярных фильмов из базы");
         return getAll(GET_POPULAR_QUERY, count);
+    }
+
+    private void setGenresForFilm(Film film) {
+        if (film.getGenres() != null) {
+            HashSet<Integer> genreIds = film.getGenres().stream()
+                    .map(Genre::getId)
+                    .collect(Collectors.toCollection(HashSet::new));
+            filmGenreRepository.batchUpdate(new ArrayList<>(genreIds), film.getId());
+        }
     }
 }

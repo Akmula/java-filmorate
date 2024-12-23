@@ -37,16 +37,22 @@ public class GenreRepository extends BaseRepository<Genre> implements GenreStora
 
     public Collection<Genre> getAllGenres() {
         log.info("GenreRepository - Получение жанров из базы");
-        return getAll(GET_ALL_GENRES_QUERY);
+        Collection<Genre> genres = getAll(GET_ALL_GENRES_QUERY);
+        log.info("GenreRepository - Получены жанры из базы - {}", genres);
+        return genres;
     }
 
     public Optional<Genre> getGenreById(Integer genreId) {
         log.info("GenreRepository - Получение жанра из базы по id - {}", genreId);
-        return getOne(GET_GENRE_BY_ID_QUERY, genreId);
+        Optional<Genre> genre = getOne(GET_GENRE_BY_ID_QUERY, genreId);
+        log.info("GenreRepository - Получен жанр из базы - {}", genre);
+        return genre;
     }
 
     public Collection<Genre> getGenresByFilmId(Integer filmId) {
         log.info("GenreRepository - Получение жанров из базы по id - {}", filmId);
-        return getAll(GET_GENRES_BY_FILM_ID_QUERY, filmId);
+        Collection<Genre> filmGenres = getAll(GET_GENRES_BY_FILM_ID_QUERY, filmId);
+        log.info("GenreRepository - Получены жанры фильма из базы - {}", filmGenres);
+        return filmGenres;
     }
 }

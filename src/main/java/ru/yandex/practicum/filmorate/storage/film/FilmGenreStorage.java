@@ -2,7 +2,7 @@ package ru.yandex.practicum.filmorate.storage.film;
 
 import ru.yandex.practicum.filmorate.model.FilmGenre;
 
-import java.util.Optional;
+import java.util.Collection;
 
 public interface FilmGenreStorage {
 
@@ -10,5 +10,7 @@ public interface FilmGenreStorage {
 
     void updateFilmGenres(Integer filmId, Integer genreId);
 
-    Optional<FilmGenre> getGenresForFilm(Integer filmId, Integer genreId);
+    Collection<FilmGenre> getGenresForFilm(Integer filmId);
+
+    void deleteGenresForFilm(Integer filmId);
 }
