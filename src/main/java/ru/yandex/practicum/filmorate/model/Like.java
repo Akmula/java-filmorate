@@ -5,18 +5,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
-import java.util.Set;
-
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class User {
+public class Like {
     private Integer id;
-    private String login;
-    private String email;
-    private String name;
-    private LocalDate birthday;
-    private Set<Integer> friends;
+    private Integer filmId;
+    private Integer userId;
 }
