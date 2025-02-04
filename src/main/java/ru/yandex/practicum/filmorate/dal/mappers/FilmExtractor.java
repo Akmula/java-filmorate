@@ -42,6 +42,7 @@ public class FilmExtractor implements ResultSetExtractor<List<Film>> {
                         .name(resultSet.getString("mpa_name"))
                         .description(resultSet.getString("mpa_description"))
                         .build());
+                System.out.println(film);
                 film.setGenres(new HashSet<>());
                 film.setRate(resultSet.getInt("rate"));
                 filmHashMap.putIfAbsent(filmKey, film);
