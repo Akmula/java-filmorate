@@ -36,12 +36,12 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
 
     private static final String GET_ALL_FILM_QUERY = """
             SELECT f.film_id, f.name AS film_name, f.description AS film_description, f.release_date, f.duration,
-                   m.MPA_ID, m.name AS mpa_name, m.description AS mpa_description,
-                   g.GENRE_ID AS genre_id, g.NAME AS genre_name
+                   m.mpa_id, m.name AS mpa_name, m.description AS mpa_description,
+                   g.genre_id AS genre_id, g.NAME AS genre_name
             FROM FILMS AS f
             JOIN MPA AS m ON f.mpa_id = m.mpa_id
-            LEFT JOIN FILM_GENRE FG on f.FILM_ID = FG.FILM_ID
-            LEFT JOIN GENRES AS g ON FG.genre_id = g.genre_id
+            LEFT JOIN FILM_GENRE FG on f.film_id = fg.film_id
+            LEFT JOIN GENRES AS g ON fg.genre_id = g.genre_id
             """;
 
     private static final String GET_FILM_BY_ID_QUERY = GET_ALL_FILM_QUERY + """
@@ -63,11 +63,12 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
 
     private static final String GET_COMMON_FILMS_QUERY = """
             SELECT f.film_id, f.name AS film_name, f.description AS film_description, f.release_date, f.duration,
-                   m.name AS mpa_name, m.description AS mpa_description, G.GENRE_ID AS genreId, G.NAME AS genre_name
+                   m.mpa_id, m.name AS mpa_name, m.description AS mpa_description,
+                   g.genre_id AS genre_id, g.NAME AS genre_name
             FROM FILMS AS f
             JOIN MPA AS m ON f.mpa_id = m.mpa_id
-            LEFT JOIN FILM_GENRE AS FG ON f.film_id = FG.film_id
-            LEFT JOIN GENRES AS G ON FG.genre_id = G.genre_id
+            LEFT JOIN FILM_GENRE AS fg ON f.film_id = fg.film_id
+            LEFT JOIN GENRES AS g ON fg.genre_id = g.genre_id
             WHERE f.film_id IN (
             SELECT l1.film_id
             FROM LIKES l1
