@@ -1,11 +1,11 @@
 package ru.yandex.practicum.filmorate.dal;
 
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
-import ru.yandex.practicum.filmorate.dal.mappers.FilmExtractor;
 import ru.yandex.practicum.filmorate.model.FilmGenre;
 import ru.yandex.practicum.filmorate.storage.film.FilmGenreStorage;
 
@@ -77,7 +77,7 @@ public class FilmGenreRepository extends BaseRepository<FilmGenre> implements Fi
         jdbcTemplate.batchUpdate(ADD_FILM_GENRE_QUERY, new BatchPreparedStatementSetter() {
 
             @Override
-            public void setValues(PreparedStatement preparedStatement, int i) throws SQLException {
+            public void setValues(@NonNull PreparedStatement preparedStatement, int i) throws SQLException {
                 preparedStatement.setInt(1, filmId);
                 preparedStatement.setInt(2, genreIds.get(i));
             }
