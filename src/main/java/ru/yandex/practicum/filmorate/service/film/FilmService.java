@@ -172,7 +172,7 @@ public class FilmService {
         }
 
         if (filmRequest.getGenres() != null) {
-            Set<Genre> genres = new HashSet<>();
+            Set<Genre> genres = new LinkedHashSet<>();
             for (Genre genre : filmRequest.getGenres()) {
                 int genreId = genre.getId();
                 genres.add(genreRepository.getGenreById(genreId)
