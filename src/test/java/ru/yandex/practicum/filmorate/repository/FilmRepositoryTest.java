@@ -128,7 +128,7 @@ class FilmRepositoryTest {
         final int filmId = newFilm.getId();
         final int userId = newUser.getId();
         filmStorage.addLikeFilm(filmId, userId);
-        Collection<Film> popular = filmStorage.getPopularFilms(3);
+        Collection<Film> popular = filmStorage.getPopularFilms(3, null, null);
         Film popularFilm = popular.stream().findFirst().orElse(null);
         assert popularFilm != null;
         assertEquals(filmId, popularFilm.getId());

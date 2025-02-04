@@ -28,7 +28,6 @@ public final class FilmMapper {
                 .duration(film.getDuration())
                 .mpa(film.getMpa())
                 .genres(film.getGenres())
-                .likes(film.getLikes())
                 .rate(film.getRate())
                 .build();
     }

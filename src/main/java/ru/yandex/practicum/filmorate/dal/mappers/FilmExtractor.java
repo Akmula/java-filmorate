@@ -1,7 +1,6 @@
 package ru.yandex.practicum.filmorate.dal.mappers;
 
 import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Component;
@@ -13,7 +12,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
-@Slf4j
 @Component
 @AllArgsConstructor
 public class FilmExtractor implements ResultSetExtractor<List<Film>> {
@@ -22,10 +20,9 @@ public class FilmExtractor implements ResultSetExtractor<List<Film>> {
     public List<Film> extractData(ResultSet resultSet) throws SQLException, DataAccessException {
         Map<Integer, Film> filmHashMap = new LinkedHashMap<>();
         Film film;
-        while (resultSet.next()) {
 
+        while (resultSet.next()) {
             Integer filmKey = resultSet.getInt("film_id");
-            log.info("filmKey = {}", filmKey);
 
             film = filmHashMap.get(filmKey);
 
@@ -42,15 +39,12 @@ public class FilmExtractor implements ResultSetExtractor<List<Film>> {
                         .name(resultSet.getString("mpa_name"))
                         .description(resultSet.getString("mpa_description"))
                         .build());
-                System.out.println(film);
                 film.setGenres(new HashSet<>());
                 film.setRate(resultSet.getInt("rate"));
                 filmHashMap.putIfAbsent(filmKey, film);
-                log.info("film = {}", film);
             }
 
-            Integer genreKey = resultSet.getInt("genre_id");
-            log.info("genreKey={}", genreKey);
+            int genreKey = resultSet.getInt("genre_id");
 
             if (genreKey > 0) {
                 Genre genre = Genre.builder()
