@@ -25,7 +25,7 @@ public class FilmExtractor implements ResultSetExtractor<List<Film>> {
         while (resultSet.next()) {
 
             Integer filmKey = resultSet.getInt("film_id");
-            log.info("filmKey={}", filmKey);
+            log.info("filmKey = {}", filmKey);
 
             film = filmHashMap.get(filmKey);
 
@@ -43,7 +43,9 @@ public class FilmExtractor implements ResultSetExtractor<List<Film>> {
                         .description(resultSet.getString("mpa_description"))
                         .build());
                 film.setGenres(new HashSet<>());
+                film.setRate(resultSet.getInt("rate"));
                 filmHashMap.putIfAbsent(filmKey, film);
+                log.info("film = {}", film);
             }
 
             Integer genreKey = resultSet.getInt("genre_id");

@@ -36,46 +36,78 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
 
     private static final String GET_ALL_FILM_QUERY = """
             SELECT f.film_id, f.name AS film_name, f.description AS film_description, f.release_date, f.duration,
-                   m.MPA_ID, m.name AS mpa_name, m.description AS mpa_description,
-                   g.GENRE_ID AS genre_id, g.NAME AS genre_name
+                   m.mpa_id, m.name AS mpa_name, m.description AS mpa_description,
+                   g.genre_id AS genre_id, g.NAME AS genre_name,
+            COUNT (l.film_id) AS rate
             FROM FILMS AS f
             JOIN MPA AS m ON f.mpa_id = m.mpa_id
-            LEFT JOIN FILM_GENRE FG on f.FILM_ID = FG.FILM_ID
-            LEFT JOIN GENRES AS g ON FG.genre_id = g.genre_id
+            LEFT JOIN FILM_GENRE FG on f.film_id = fg.film_id
+            LEFT JOIN GENRES AS g ON fg.genre_id = g.genre_id
+            LEFT JOIN LIKES AS l on f.film_id = l.film_id
+            GROUP BY f.film_id, f.name, f.description, f.release_date, f.duration,
+                     m.mpa_id, m.name, m.description, g.genre_id, g.name
             """;
 
-    private static final String GET_FILM_BY_ID_QUERY = GET_ALL_FILM_QUERY + """
+    private static final String GET_FILM_BY_ID_QUERY = """
+                        SELECT f.film_id, f.name AS film_name, f.description AS film_description, f.release_date, f.duration,
+                   m.mpa_id, m.name AS mpa_name, m.description AS mpa_description,
+                   g.genre_id AS genre_id, g.NAME AS genre_name,
+            COUNT (l.film_id) AS rate
+            FROM FILMS AS f
+            JOIN MPA AS m ON f.mpa_id = m.mpa_id
+            LEFT JOIN FILM_GENRE FG on f.film_id = fg.film_id
+            LEFT JOIN GENRES AS g ON fg.genre_id = g.genre_id
+            LEFT JOIN LIKES AS l on f.film_id = l.film_id
             WHERE f.film_id = ?
+            GROUP BY f.film_id, f.name, f.description, f.release_date, f.duration,
+                     m.mpa_id, m.name, m.description, g.genre_id, g.name
             """;
 
-    private static final String GET_POPULAR_QUERY = GET_ALL_FILM_QUERY + """
+    private static final String GET_POPULAR_QUERY = """
+                                    SELECT f.film_id, f.name AS film_name, f.description AS film_description, f.release_date, f.duration,
+                   m.mpa_id, m.name AS mpa_name, m.description AS mpa_description,
+                   g.genre_id AS genre_id, g.NAME AS genre_name,
+            COUNT (l.film_id) AS rate
+            FROM FILMS AS f
+            JOIN MPA AS m ON f.mpa_id = m.mpa_id
+            LEFT JOIN FILM_GENRE FG on f.film_id = fg.film_id
+            LEFT JOIN GENRES AS g ON fg.genre_id = g.genre_id
+            LEFT JOIN LIKES AS l on f.film_id = l.film_id
             LEFT JOIN (
             SELECT l.film_id,
-            COUNT(l.user_id) AS likes_count
+            COUNT(l.user_id) AS rate
             FROM LIKES l
             GROUP BY l.film_id
-            ORDER BY likes_count DESC
+            ORDER BY rate DESC
             ) AS flc
             ON f.film_id = flc.film_id
-            ORDER BY flc.likes_count DESC
+            GROUP BY f.film_id, f.name, f.description, f.release_date, f.duration,
+                     m.mpa_id, m.name, m.description, g.genre_id, g.name
+            ORDER BY flc.rate DESC
             LIMIT ?
             """;
 
     private static final String GET_COMMON_FILMS_QUERY = """
             SELECT f.film_id, f.name AS film_name, f.description AS film_description, f.release_date, f.duration,
-                   m.name AS mpa_name, m.description AS mpa_description, G.GENRE_ID AS genreId, G.NAME AS genre_name
+                   m.mpa_id, m.name AS mpa_name, m.description AS mpa_description,
+                   g.genre_id AS genre_id, g.NAME AS genre_name,
+                   COUNT(likes.user_id) AS rate
+            
             FROM FILMS AS f
             JOIN MPA AS m ON f.mpa_id = m.mpa_id
-            LEFT JOIN FILM_GENRE AS FG ON f.film_id = FG.film_id
-            LEFT JOIN GENRES AS G ON FG.genre_id = G.genre_id
+            LEFT JOIN FILM_GENRE AS fg ON f.film_id = fg.film_id
+            LEFT JOIN GENRES AS g ON fg.genre_id = g.genre_id
+            LEFT JOIN LIKES AS likes ON f.film_id = likes.film_id
             WHERE f.film_id IN (
             SELECT l1.film_id
-            FROM LIKES l1
-            JOIN LIKES l2
+            FROM LIKES AS l1
+            JOIN LIKES AS l2
             ON l1.film_id = l2.film_id
             WHERE l1.user_id = ? AND l2.user_id = ?
             ORDER BY f.film_id
             )
+                        GROUP BY f.film_id, f.name, f.description, f.release_date, f.duration,
+                     m.mpa_id, m.name, m.description, g.genre_id, g.name
             """;
 
     public FilmRepository(JdbcTemplate jdbcTemplate, FilmRowMapper filmRowMapper,

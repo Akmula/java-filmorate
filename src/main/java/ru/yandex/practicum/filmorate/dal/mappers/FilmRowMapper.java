@@ -27,6 +27,7 @@ public class FilmRowMapper implements RowMapper<Film> {
                         .description(resultSet.getString("mpa_description"))
                         .build())
                 .genres(new HashSet<>())
+                .rate(resultSet.getInt("rate"))
                 .build();
     }
 }
