@@ -11,6 +11,8 @@ public interface FilmStorage {
 
     Film updateFilm(Film film);
 
+    void deleteFilm(Film film);
+
     Optional<Film> getFilmById(Integer filmId);
 
     Collection<Film> getAllFilms();
@@ -20,4 +22,6 @@ public interface FilmStorage {
     void deleteLikeFilm(Integer filmId, Integer userId);
 
     Collection<Film> getPopularFilms(Integer count);
+
+    Collection<Film> getCommonFilms(Integer userId, Integer friendId);
 }

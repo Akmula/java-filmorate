@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.service.film;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.relational.core.sql.In;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dal.GenreRepository;
 import ru.yandex.practicum.filmorate.dal.LikeRepository;
@@ -69,13 +70,22 @@ public class FilmService {
         return filmDto;
     }
 
+    public FilmDto deleteFilm(Integer filmId) {
+        log.info("FilmService - Удаление фильма");
+        Film deletedFilm = filmStorage.getFilmById(filmId)
+                .orElseThrow(() -> new FilmNotFoundException(filmId));
+        filmStorage.deleteFilm(deletedFilm);
+        FilmDto filmDto = FilmMapper.mapToFilmDto(deletedFilm);
+        log.info("FilmService - Удаленный фильм: {}", filmDto);
+        return filmDto;
+    }
+
     public Collection<FilmDto> getAllFilms() {
         log.info("FilmService - Получение всех фильмов");
         Collection<FilmDto> filmsDto = filmStorage.getAllFilms()
                 .stream().map(FilmMapper::mapToFilmDto).toList();
 
         filmsDto.forEach(filmDto -> {
-            filmDto.setGenres(genreRepository.getGenresByFilmId(filmDto.getId()));
             Set<Integer> likeIds = new HashSet<>();
             likeRepository.getLikeFilm(filmDto.getId()).forEach(like -> likeIds.add(like.getUserId()));
             filmDto.setLikes(likeIds);
@@ -91,11 +101,9 @@ public class FilmService {
                 .map(FilmMapper::mapToFilmDto)
                 .orElseThrow(() -> new FilmNotFoundException(filmId));
 
-        Collection<Genre> filmGenres = genreRepository.getGenresByFilmId(filmId);
         Set<Integer> likeIds = new HashSet<>();
         likeRepository.getLikeFilm(filmId).forEach(like -> likeIds.add(like.getUserId()));
 
-        filmDto.setGenres(filmGenres);
         filmDto.setLikes(likeIds);
         filmDto.setRate(likeIds.size());
         log.info("FilmService - Получен фильм по id - {}", filmDto);
@@ -125,7 +133,6 @@ public class FilmService {
 
         for (FilmDto filmDto : popularMovies) {
             Set<Integer> likeIds = new HashSet<>();
-            filmDto.setGenres(genreRepository.getGenresByFilmId(filmDto.getId()));
             likeRepository.getLikeFilm(filmDto.getId()).forEach(like -> likeIds.add(like.getUserId()));
             filmDto.setLikes(likeIds);
             filmDto.setRate(likeIds.size());
@@ -133,6 +140,12 @@ public class FilmService {
 
         log.info("FilmService - Получено {} популярных фильмов", count);
         return popularMovies;
+    }
+
+    public Collection<FilmDto> getCommonFilms(Integer userId, Integer friendId) {
+        log.info("FilmService - получение общих фильмов пользователей {} и {}.", userId, friendId);
+        return filmStorage.getCommonFilms(userId, friendId)
+                .stream().map(FilmMapper::mapToFilmDto).toList();
     }
 
     private void validate(Integer filmId, Integer userId) {
@@ -160,7 +173,7 @@ public class FilmService {
         }
 
         if (filmRequest.getGenres() != null) {
-            Collection<Genre> genres = new ArrayList<>();
+            Set<Genre> genres = new HashSet<>();
             for (Genre genre : filmRequest.getGenres()) {
                 int genreId = genre.getId();
                 genres.add(genreRepository.getGenreById(genreId)
@@ -168,7 +181,7 @@ public class FilmService {
             }
             filmRequest.setGenres(genres);
         } else {
-            filmRequest.setGenres(new ArrayList<>());
+            filmRequest.setGenres(new HashSet<>());
         }
         return filmRequest;
     }

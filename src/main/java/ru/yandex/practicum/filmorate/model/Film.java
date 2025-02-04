@@ -32,7 +32,7 @@ public class Film {
     private Integer duration;
     private MPA mpa;
 
-    private Collection<Genre> genres;
+    private Set<Genre> genres;
 
     @JsonIgnore
     private Set<Integer> likes;

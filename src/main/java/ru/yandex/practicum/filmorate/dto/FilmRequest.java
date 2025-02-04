@@ -10,7 +10,7 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MPA;
 
 import java.time.LocalDate;
-import java.util.Collection;
+import java.util.Set;
 
 @Data
 @Builder
@@ -31,5 +31,5 @@ public class FilmRequest {
     @NotNull(message = "mpaId не может быть пустым!")
     private MPA mpa;
 
-    private Collection<Genre> genres;
+    private Set<Genre> genres;
 }

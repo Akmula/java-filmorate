@@ -35,6 +35,12 @@ public class UserController {
         return userDto;
     }
 
+    @DeleteMapping("/{userId}")
+    public UserDto deleteUser(@PathVariable int userId) {
+        log.info("DELETE /users - Запрос на удаление пользователя: {}", userId);
+        return userService.deleteUser(userId);
+    }
+
     @GetMapping
     public Collection<UserDto> getUsers() {
         log.info("GET /users - Запрос на получение пользователей");
@@ -52,7 +58,7 @@ public class UserController {
     @PutMapping("/{userId}/friends/{friendId}")
     public UserDto addFriend(@PathVariable int userId, @PathVariable int friendId) {
         log.info("PUT /users - Запрос на добавление в друзья пользователя с id: {}," +
-                " от пользователя: {}", friendId, userId);
+                 " от пользователя: {}", friendId, userId);
         return userService.addFriend(userId, friendId);
     }
 
@@ -65,14 +71,14 @@ public class UserController {
     @DeleteMapping("/{userId}/friends/{friendId}")
     public UserDto deleteFriend(@PathVariable int userId, @PathVariable int friendId) {
         log.info("DELETE /users - Запрос на удаление из друзей пользователя с id: {}," +
-                " от пользователя: {}", friendId, userId);
+                 " от пользователя: {}", friendId, userId);
         return userService.deleteFriend(userId, friendId);
     }
 
     @GetMapping("/{userId}/friends/common/{otherId}")
     public Collection<UserDto> getCommonFriends(@PathVariable int userId, @PathVariable int otherId) {
         log.info("GET /users - Запрос на получение общих друзей пользователя с id: {}," +
-                " с пользователем id: {}", userId, otherId);
+                 " с пользователем id: {}", userId, otherId);
         return userService.getCommonFriends(userId, otherId);
     }
 }

@@ -51,6 +51,16 @@ public class UserService {
         return userDto;
     }
 
+    public UserDto deleteUser(Integer userId) {
+        log.info("UserService - Удаление пользователя с id: {}", userId);
+        User deletedUser = userStorage.getUserById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+        userStorage.deleteUser(deletedUser);
+        UserDto userDto = UserMapper.mapToUserDto(deletedUser);
+        log.info("UserService - Удаленный пользователь: {}", userDto);
+        return userDto;
+    }
+
     public Collection<UserDto> getAllUsers() {
         log.info("UserService - Получение всех пользователей");
         Collection<UserDto> usersDto = UserMapper.mapToUserDtoList(userStorage.getAllUsers());
@@ -107,7 +117,7 @@ public class UserService {
 
     public Collection<UserDto> getCommonFriends(Integer userId, Integer otherId) {
         log.info("UserService - Получение общих друзей пользователя с id - {}," +
-                " с пользователем id - {}", userId, otherId);
+                 " с пользователем id - {}", userId, otherId);
         Collection<UserDto> friendsDto = UserMapper.mapToUserDtoList(userStorage.getCommonFriends(userId, otherId));
         log.info("UserService - Получен список общих друзей - {}", friendsDto);
         return friendsDto;

@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.dal.mappers.FilmExtractor;
 import ru.yandex.practicum.filmorate.exceptions.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
@@ -24,6 +25,11 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
     private static final String UPDATE_USER_QUERY = """
             UPDATE USERS
             SET login = ?, email = ?, name = ?, birthday = ?
+            WHERE user_id = ?
+            """;
+
+    private static final String DELETE_USER_QUERY = """
+            DELETE FROM USERS
             WHERE user_id = ?
             """;
 
@@ -96,6 +102,12 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
         );
         log.info("UserRepository - Пользователь {} обновлен", user);
         return user;
+    }
+
+    @Override
+    public void deleteUser(User user) {
+        log.info("UserRepository - Удаление пользователя {} из базы", user);
+        update(DELETE_USER_QUERY, user.getId());
     }
 
     @Override

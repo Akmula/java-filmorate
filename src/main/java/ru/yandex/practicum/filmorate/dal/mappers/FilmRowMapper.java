@@ -7,12 +7,14 @@ import ru.yandex.practicum.filmorate.model.MPA;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashSet;
 
 @Component
 public class FilmRowMapper implements RowMapper<Film> {
 
     @Override
-    public Film mapRow(ResultSet resultSet, int rowNum) throws SQLException {
+    public Film mapRow(ResultSet resultSet, int row) throws SQLException {
+
         return Film.builder()
                 .id(resultSet.getInt("film_id"))
                 .name(resultSet.getString("name"))
@@ -24,6 +26,7 @@ public class FilmRowMapper implements RowMapper<Film> {
                         .name(resultSet.getString("mpa_name"))
                         .description(resultSet.getString("mpa_description"))
                         .build())
+                .genres(new HashSet<>())
                 .build();
     }
 }

@@ -35,6 +35,12 @@ public class FilmController {
         return filmDto;
     }
 
+    @DeleteMapping("/{filmId}")
+    public FilmDto deleteFilm(@PathVariable int filmId) {
+        log.info("DELETE /films - Запрос на удаление фильма по ID: {}", filmId);
+        return filmService.deleteFilm(filmId);
+    }
+
     @GetMapping
     public Collection<FilmDto> getFilms() {
         log.info("GET /films - Запрос на получение фильмов");
@@ -67,5 +73,11 @@ public class FilmController {
         Collection<FilmDto> response = filmService.getPopularFilms(count);
         log.info("GET /films - Ответ на получение популярных фильмов: {}", response);
         return response;
+    }
+
+    @GetMapping("/common")
+    public Collection<FilmDto> getCommonFilms(@RequestParam(name = "userId") int userId,
+                                              @RequestParam(name = "friendId") int friendId) {
+        return filmService.getCommonFilms(userId, friendId);
     }
 }
