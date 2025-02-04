@@ -49,7 +49,7 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
             """;
 
     private static final String GET_FILM_BY_ID_QUERY = """
-                        SELECT f.film_id, f.name AS film_name, f.description AS film_description, f.release_date, f.duration,
+            SELECT f.film_id, f.name AS film_name, f.description AS film_description, f.release_date, f.duration,
                    m.mpa_id, m.name AS mpa_name, m.description AS mpa_description,
                    g.genre_id AS genre_id, g.NAME AS genre_name,
             COUNT (l.film_id) AS rate
@@ -64,7 +64,7 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
             """;
 
     private static final String GET_POPULAR_QUERY = """
-                                    SELECT f.film_id, f.name AS film_name, f.description AS film_description, f.release_date, f.duration,
+            SELECT f.film_id, f.name AS film_name, f.description AS film_description, f.release_date, f.duration,
                    m.mpa_id, m.name AS mpa_name, m.description AS mpa_description,
                    g.genre_id AS genre_id, g.NAME AS genre_name,
             COUNT (l.film_id) AS rate
@@ -92,7 +92,6 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
                    m.mpa_id, m.name AS mpa_name, m.description AS mpa_description,
                    g.genre_id AS genre_id, g.NAME AS genre_name,
                    COUNT(likes.user_id) AS rate
-            
             FROM FILMS AS f
             JOIN MPA AS m ON f.mpa_id = m.mpa_id
             LEFT JOIN FILM_GENRE AS fg ON f.film_id = fg.film_id
@@ -106,7 +105,7 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
             WHERE l1.user_id = ? AND l2.user_id = ?
             ORDER BY f.film_id
             )
-                        GROUP BY f.film_id, f.name, f.description, f.release_date, f.duration,
+            GROUP BY f.film_id, f.name, f.description, f.release_date, f.duration,
                      m.mpa_id, m.name, m.description, g.genre_id, g.name
             """;
 
