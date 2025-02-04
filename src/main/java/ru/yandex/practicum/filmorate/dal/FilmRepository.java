@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.dal;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.dal.mappers.FilmExtractor;
 import ru.yandex.practicum.filmorate.dal.mappers.FilmRowMapper;
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 @Repository
 public class FilmRepository extends BaseRepository<Film> implements FilmStorage {
 
+    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
     private final LikeRepository likeRepository;
     private final FilmGenreRepository filmGenreRepository;
 
@@ -63,30 +65,6 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
                      m.mpa_id, m.name, m.description, g.genre_id, g.name
             """;
 
-    private static final String GET_POPULAR_QUERY = """
-            SELECT f.film_id, f.name AS film_name, f.description AS film_description, f.release_date, f.duration,
-                   m.mpa_id, m.name AS mpa_name, m.description AS mpa_description,
-                   g.genre_id AS genre_id, g.NAME AS genre_name,
-            COUNT (l.film_id) AS rate
-            FROM FILMS AS f
-            JOIN MPA AS m ON f.mpa_id = m.mpa_id
-            LEFT JOIN FILM_GENRE FG on f.film_id = fg.film_id
-            LEFT JOIN GENRES AS g ON fg.genre_id = g.genre_id
-            LEFT JOIN LIKES AS l on f.film_id = l.film_id
-            LEFT JOIN (
-            SELECT l.film_id,
-            COUNT(l.user_id) AS rate
-            FROM LIKES l
-            GROUP BY l.film_id
-            ORDER BY rate DESC
-            ) AS flc
-            ON f.film_id = flc.film_id
-            GROUP BY f.film_id, f.name, f.description, f.release_date, f.duration,
-                     m.mpa_id, m.name, m.description, g.genre_id, g.name
-            ORDER BY flc.rate DESC
-            LIMIT ?
-            """;
-
     private static final String GET_COMMON_FILMS_QUERY = """
             SELECT f.film_id, f.name AS film_name, f.description AS film_description, f.release_date, f.duration,
                    m.mpa_id, m.name AS mpa_name, m.description AS mpa_description,
@@ -116,6 +94,7 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
         super(jdbcTemplate, filmRowMapper);
         this.likeRepository = likeRepository;
         this.filmGenreRepository = filmGenreRepository;
+        this.namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
     }
 
     @Override
@@ -185,9 +164,22 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     }
 
     @Override
-    public Collection<Film> getPopularFilms(Integer count) {
+    public Collection<Film> getPopularFilms(Integer count, Integer genreId, Integer year) {
+
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("count", count);
+
+        if (genreId != null) {
+            params.put("genreId", genreId);
+        }
+        if (year != null) {
+            params.put("year", year);
+        }
+
+        String sqlQuery = getSqlQuery(params);
+        System.out.println(sqlQuery);
         log.info("FilmRepository - Получение популярных фильмов из базы");
-        return jdbcTemplate.query(GET_POPULAR_QUERY, new FilmExtractor(), count);
+        return namedParameterJdbcTemplate.query(sqlQuery, params, new FilmExtractor());
     }
 
     @Override
@@ -203,5 +195,53 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
                     .collect(Collectors.toCollection(HashSet::new));
             filmGenreRepository.batchUpdate(new ArrayList<>(genreIds), film.getId());
         }
+    }
+
+    private String getSqlQuery(Map<String, Object> params) {
+
+        String sqlQuery = """
+                SELECT f.film_id, f.name AS film_name, f.description AS film_description, f.release_date, f.duration,
+                       m.mpa_id, m.name AS mpa_name, m.description AS mpa_description,
+                       g.genre_id AS genre_id, g.NAME AS genre_name,
+                COUNT (l.film_id) AS rate
+                FROM FILMS AS f
+                JOIN MPA AS m ON f.mpa_id = m.mpa_id
+                LEFT JOIN FILM_GENRE FG on f.film_id = fg.film_id
+                LEFT JOIN GENRES AS g ON fg.genre_id = g.genre_id
+                LEFT JOIN LIKES AS l on f.film_id = l.film_id
+                """;
+
+        String endSqlQuery = """
+                GROUP BY f.film_id, f.name, f.description, f.release_date, f.duration,
+                          m.mpa_id, m.name, m.description, g.genre_id, g.name
+                ORDER BY rate DESC
+                LIMIT :count
+                """;
+
+        String sqlWhereYear = """
+                WHERE EXTRACT(YEAR FROM f.release_date) = :year
+                """;
+
+        String sqlWhereGenre = """
+                f.film_id IN (
+                        SELECT film_id
+                        FROM FILM_GENRE
+                        WHERE genre_id = :genreId
+                )
+                """;
+
+        if (params.get("year") != null && params.get("genreId") != null) {
+            sqlQuery = sqlQuery + sqlWhereYear + " AND " + sqlWhereGenre;
+        }
+
+        if (params.get("year") != null && params.get("genreId") == null) {
+            sqlQuery = sqlQuery + sqlWhereYear;
+        }
+
+        if (params.get("genreId") != null && params.get("year") == null) {
+            sqlQuery = sqlQuery + " WHERE " + sqlWhereGenre;
+        }
+
+        return sqlQuery + endSqlQuery;
     }
 }

@@ -4,11 +4,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dal.GenreRepository;
-import ru.yandex.practicum.filmorate.dal.LikeRepository;
 import ru.yandex.practicum.filmorate.dal.MPARepository;
 import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.dto.FilmRequest;
 import ru.yandex.practicum.filmorate.exceptions.FilmNotFoundException;
+import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.UserNotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
@@ -33,19 +33,17 @@ public class FilmService {
     private final UserStorage userStorage;
     private final MPARepository mpaRepository;
     private final GenreRepository genreRepository;
-    private final LikeRepository likeRepository;
 
 
     public FilmService(@Qualifier("filmRepository") FilmStorage filmStorage,
                        @Qualifier("userRepository") UserStorage userStorage,
                        MPARepository mpaRepository,
-                       GenreRepository genreRepository, LikeRepository likeRepository
+                       GenreRepository genreRepository
     ) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
         this.genreRepository = genreRepository;
         this.mpaRepository = mpaRepository;
-        this.likeRepository = likeRepository;
     }
 
     public FilmDto createFilm(FilmRequest request) {
@@ -84,12 +82,6 @@ public class FilmService {
         Collection<FilmDto> filmsDto = filmStorage.getAllFilms()
                 .stream().map(FilmMapper::mapToFilmDto).toList();
 
-        filmsDto.forEach(filmDto -> {
-            Set<Integer> likeIds = new HashSet<>();
-            likeRepository.getLikeFilm(filmDto.getId()).forEach(like -> likeIds.add(like.getUserId()));
-            filmDto.setLikes(likeIds);
-            filmDto.setRate(likeIds.size());
-        });
         log.info("FilmService - Список всех фильмов получен");
         return filmsDto;
     }
@@ -100,11 +92,6 @@ public class FilmService {
                 .map(FilmMapper::mapToFilmDto)
                 .orElseThrow(() -> new FilmNotFoundException(filmId));
 
-        Set<Integer> likeIds = new HashSet<>();
-        likeRepository.getLikeFilm(filmId).forEach(like -> likeIds.add(like.getUserId()));
-
-        filmDto.setLikes(likeIds);
-        filmDto.setRate(likeIds.size());
         log.info("FilmService - Получен фильм по id - {}", filmDto);
         return filmDto;
     }
@@ -125,17 +112,11 @@ public class FilmService {
         return getFilmById(filmId);
     }
 
-    public Collection<FilmDto> getPopularFilms(Integer count) {
-        log.info("FilmService - получение популярных фильмов. Выводить {} фильмов", count);
-        List<FilmDto> popularMovies = filmStorage.getPopularFilms(count)
+    public Collection<FilmDto> getPopularFilms(Integer count, Integer genreId, Integer year) {
+        log.info("FilmService - получение популярных фильмов по параметрам {} и {}. Выводить {} фильмов",
+                count, genreId, year);
+        List<FilmDto> popularMovies = filmStorage.getPopularFilms(count, genreId, year)
                 .stream().map(FilmMapper::mapToFilmDto).toList();
-
-        for (FilmDto filmDto : popularMovies) {
-            Set<Integer> likeIds = new HashSet<>();
-            likeRepository.getLikeFilm(filmDto.getId()).forEach(like -> likeIds.add(like.getUserId()));
-            filmDto.setLikes(likeIds);
-            filmDto.setRate(likeIds.size());
-        }
 
         log.info("FilmService - Получено {} популярных фильмов", count);
         return popularMovies;
@@ -166,7 +147,7 @@ public class FilmService {
         if (filmRequest.getMpa() != null) {
             int mpaId = filmRequest.getMpa().getId();
             filmRequest.setMpa(mpaRepository.getMpaById(mpaId)
-                    .orElseThrow(() -> new ValidationException("Категория с id - " + mpaId + " не найдена")));
+                    .orElseThrow(() -> new NotFoundException("Категория с id - " + mpaId + " не найдена")));
         } else {
             filmRequest.setMpa(MPA.builder().build());
         }
@@ -176,7 +157,7 @@ public class FilmService {
             for (Genre genre : filmRequest.getGenres()) {
                 int genreId = genre.getId();
                 genres.add(genreRepository.getGenreById(genreId)
-                        .orElseThrow(() -> new ValidationException("Жанр с id - " + genreId + " не найден")));
+                        .orElseThrow(() -> new NotFoundException("Жанр с id - " + genreId + " не найден")));
             }
             filmRequest.setGenres(genres);
         } else {
