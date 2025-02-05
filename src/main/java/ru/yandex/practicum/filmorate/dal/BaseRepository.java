@@ -1,12 +1,15 @@
 package ru.yandex.practicum.filmorate.dal;
 
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Collection;
 import java.util.List;
@@ -53,5 +56,21 @@ public class BaseRepository<T> {
 
     protected void delete(String query, Object... args) {
         jdbcTemplate.update(query, args);
+    }
+
+    protected void batchUpdate(List<Integer> ids, String query, Integer id) {
+        jdbcTemplate.batchUpdate(query, new BatchPreparedStatementSetter() {
+
+            @Override
+            public void setValues(@NonNull PreparedStatement preparedStatement, int i) throws SQLException {
+                preparedStatement.setInt(1, id);
+                preparedStatement.setInt(2, ids.get(i));
+            }
+
+            @Override
+            public int getBatchSize() {
+                return ids.size();
+            }
+        });
     }
 }

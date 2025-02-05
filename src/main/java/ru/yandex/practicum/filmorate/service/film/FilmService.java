@@ -3,19 +3,16 @@ package ru.yandex.practicum.filmorate.service.film;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dal.DirectorRepository;
 import ru.yandex.practicum.filmorate.dal.GenreRepository;
 import ru.yandex.practicum.filmorate.dal.MPARepository;
 import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.dto.FilmRequest;
 import ru.yandex.practicum.filmorate.exceptions.FilmNotFoundException;
-import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.UserNotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.MPA;
-import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.*;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
@@ -33,22 +30,25 @@ public class FilmService {
     private final UserStorage userStorage;
     private final MPARepository mpaRepository;
     private final GenreRepository genreRepository;
+    private final DirectorRepository directorRepository;
 
 
     public FilmService(@Qualifier("filmRepository") FilmStorage filmStorage,
                        @Qualifier("userRepository") UserStorage userStorage,
                        MPARepository mpaRepository,
-                       GenreRepository genreRepository
+                       GenreRepository genreRepository,
+                       DirectorRepository directorRepository
     ) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
         this.genreRepository = genreRepository;
         this.mpaRepository = mpaRepository;
+        this.directorRepository = directorRepository;
     }
 
     public FilmDto createFilm(FilmRequest request) {
         log.info("FilmService - Создание фильма - {}", request);
-        FilmRequest updatedRequest = updateMpaAndGenresForRequest(request);
+        FilmRequest updatedRequest = updateFieldsForRequest(request);
         Film film = FilmMapper.mapToFilm(updatedRequest);
         FilmDto filmDto = FilmMapper.mapToFilmDto(filmStorage.createFilm(film));
         log.info("FilmService - Добавлен фильм - {}", filmDto);
@@ -57,7 +57,7 @@ public class FilmService {
 
     public FilmDto updateFilm(FilmRequest request) {
         log.info("FilmService - Обновление фильма");
-        FilmRequest updatedRequest = updateMpaAndGenresForRequest(request);
+        FilmRequest updatedRequest = updateFieldsForRequest(request);
         Film updatedFilm = filmStorage.getFilmById(request.getId())
                 .map(film -> FilmMapper.updateFilmFields(film, updatedRequest))
                 .orElseThrow(() -> new FilmNotFoundException(updatedRequest.getId()));
@@ -128,6 +128,11 @@ public class FilmService {
                 .stream().map(FilmMapper::mapToFilmDto).toList();
     }
 
+    public Collection<FilmDto> getDirectorFilms(Integer directorId, String sortBy) {
+        return filmStorage.getDirectorFilms(directorId, sortBy)
+                .stream().map(FilmMapper::mapToFilmDto).toList();
+    }
+
     private void validate(Integer filmId, Integer userId) {
         log.info("FilmService - проверка в базе фильма с id - {} и пользователя с id - {}", filmId, userId);
         Optional<Film> film = filmStorage.getFilmById(filmId);
@@ -141,13 +146,13 @@ public class FilmService {
         }
     }
 
-    private FilmRequest updateMpaAndGenresForRequest(FilmRequest filmRequest) {
-        log.info("FilmService - установка MPA и жанров");
+    private FilmRequest updateFieldsForRequest(FilmRequest filmRequest) {
+        log.info("FilmService - установка MPA, жанров и режиссеров");
         validateRequest(filmRequest);
         if (filmRequest.getMpa() != null) {
             int mpaId = filmRequest.getMpa().getId();
             filmRequest.setMpa(mpaRepository.getMpaById(mpaId)
-                    .orElseThrow(() -> new NotFoundException("Категория с id - " + mpaId + " не найдена")));
+                    .orElseThrow(() -> new ValidationException("Категория с id - " + mpaId + " не найдена")));
         } else {
             filmRequest.setMpa(MPA.builder().build());
         }
@@ -157,12 +162,25 @@ public class FilmService {
             for (Genre genre : filmRequest.getGenres()) {
                 int genreId = genre.getId();
                 genres.add(genreRepository.getGenreById(genreId)
-                        .orElseThrow(() -> new NotFoundException("Жанр с id - " + genreId + " не найден")));
+                        .orElseThrow(() -> new ValidationException("Жанр с id - " + genreId + " не найден")));
             }
             filmRequest.setGenres(genres);
         } else {
             filmRequest.setGenres(new HashSet<>());
         }
+
+        if (filmRequest.getDirectors() != null) {
+            Set<Director> directors = new LinkedHashSet<>();
+            for (Director director : filmRequest.getDirectors()) {
+                int directorId = director.getId();
+                directors.add(directorRepository.getDirectorById(directorId)
+                        .orElseThrow(() -> new ValidationException("Режиссер с id - " + directorId + " не найден")));
+            }
+            filmRequest.setDirectors(directors);
+        } else {
+            filmRequest.setDirectors(new HashSet<>());
+        }
+
         return filmRequest;
     }
 
