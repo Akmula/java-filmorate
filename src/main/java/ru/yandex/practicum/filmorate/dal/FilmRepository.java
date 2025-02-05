@@ -7,11 +7,9 @@ import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.dal.mappers.FilmExtractor;
 import ru.yandex.practicum.filmorate.dal.mappers.FilmRowMapper;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -39,41 +37,50 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     private static final String GET_ALL_FILM_QUERY = """
             SELECT f.film_id, f.name AS film_name, f.description AS film_description, f.release_date, f.duration,
                    m.mpa_id, m.name AS mpa_name, m.description AS mpa_description,
-                   g.genre_id AS genre_id, g.NAME AS genre_name,
+                   g.genre_id AS genre_id, g.name AS genre_name,
+                   d.director_id AS director_id, d.name AS director_name,
             COUNT (l.film_id) AS rate
             FROM FILMS AS f
             JOIN MPA AS m ON f.mpa_id = m.mpa_id
             LEFT JOIN FILM_GENRE FG on f.film_id = fg.film_id
             LEFT JOIN GENRES AS g ON fg.genre_id = g.genre_id
+            LEFT JOIN FILM_DIRECTORS FD on f.film_id = fd.film_id
+            LEFT JOIN DIRECTORS AS d ON fd.director_id = d.director_id
             LEFT JOIN LIKES AS l on f.film_id = l.film_id
             GROUP BY f.film_id, f.name, f.description, f.release_date, f.duration,
-                     m.mpa_id, m.name, m.description, g.genre_id, g.name
+                     m.mpa_id, m.name, m.description, g.genre_id, g.name, d.director_id, d.name
             """;
 
     private static final String GET_FILM_BY_ID_QUERY = """
             SELECT f.film_id, f.name AS film_name, f.description AS film_description, f.release_date, f.duration,
                    m.mpa_id, m.name AS mpa_name, m.description AS mpa_description,
                    g.genre_id AS genre_id, g.NAME AS genre_name,
+                   d.director_id AS director_id, d.NAME AS director_name,
             COUNT (l.film_id) AS rate
             FROM FILMS AS f
             JOIN MPA AS m ON f.mpa_id = m.mpa_id
             LEFT JOIN FILM_GENRE FG on f.film_id = fg.film_id
             LEFT JOIN GENRES AS g ON fg.genre_id = g.genre_id
+            LEFT JOIN FILM_DIRECTORS FD on f.film_id = fd.film_id
+            LEFT JOIN DIRECTORS AS d ON fd.director_id = d.director_id
             LEFT JOIN LIKES AS l on f.film_id = l.film_id
             WHERE f.film_id = ?
             GROUP BY f.film_id, f.name, f.description, f.release_date, f.duration,
-                     m.mpa_id, m.name, m.description, g.genre_id, g.name
+                     m.mpa_id, m.name, m.description, g.genre_id, g.name, d.director_id, d.name
             """;
 
     private static final String GET_COMMON_FILMS_QUERY = """
             SELECT f.film_id, f.name AS film_name, f.description AS film_description, f.release_date, f.duration,
                    m.mpa_id, m.name AS mpa_name, m.description AS mpa_description,
                    g.genre_id AS genre_id, g.NAME AS genre_name,
+                   d.director_id AS director_id, d.NAME AS director_name,
                    COUNT(likes.user_id) AS rate
             FROM FILMS AS f
             JOIN MPA AS m ON f.mpa_id = m.mpa_id
             LEFT JOIN FILM_GENRE AS fg ON f.film_id = fg.film_id
             LEFT JOIN GENRES AS g ON fg.genre_id = g.genre_id
+            LEFT JOIN FILM_DIRECTORS FD on f.film_id = fd.film_id
+            LEFT JOIN DIRECTORS AS d ON fd.director_id = d.director_id
             LEFT JOIN LIKES AS likes ON f.film_id = likes.film_id
             WHERE f.film_id IN (
             SELECT l1.film_id
@@ -84,17 +91,19 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
             ORDER BY f.film_id
             )
             GROUP BY f.film_id, f.name, f.description, f.release_date, f.duration,
-                     m.mpa_id, m.name, m.description, g.genre_id, g.name
+                     m.mpa_id, m.name, m.description, g.genre_id, g.name, d.director_id, d.name
             """;
+    private final FilmDirectorsRepository filmDirectorsRepository;
 
     public FilmRepository(JdbcTemplate jdbcTemplate, FilmRowMapper filmRowMapper,
 
 
-                          LikeRepository likeRepository, FilmGenreRepository filmGenreRepository) {
+                          LikeRepository likeRepository, FilmGenreRepository filmGenreRepository, FilmDirectorsRepository filmDirectorsRepository) {
         super(jdbcTemplate, filmRowMapper);
         this.likeRepository = likeRepository;
         this.filmGenreRepository = filmGenreRepository;
         this.namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
+        this.filmDirectorsRepository = filmDirectorsRepository;
     }
 
     @Override
@@ -109,7 +118,8 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
                 film.getMpa().getId()
         );
         film.setId(id);
-        setGenresForFilm(film);
+        filmGenreRepository.setGenresForFilm(film);
+        filmDirectorsRepository.setDirectorsForFilm(film);
         log.info("FilmRepository - Фильм {} добавлен в базу данных", film);
         return film;
     }
@@ -124,7 +134,8 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
                 film.getDuration(),
                 film.getMpa().getId(),
                 film.getId());
-        setGenresForFilm(film);
+        filmGenreRepository.setGenresForFilm(film);
+        filmDirectorsRepository.setDirectorsForFilm(film);
         log.info("FilmRepository - Фильм {} обновлен в базе данных", film);
         return film;
     }
@@ -177,7 +188,6 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
         }
 
         String sqlQuery = getSqlQuery(params);
-        System.out.println(sqlQuery);
         log.info("FilmRepository - Получение популярных фильмов из базы");
         return namedParameterJdbcTemplate.query(sqlQuery, params, new FilmExtractor());
     }
@@ -188,13 +198,22 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
         return jdbcTemplate.query(GET_COMMON_FILMS_QUERY, new FilmExtractor(), userId, friendId);
     }
 
-    private void setGenresForFilm(Film film) {
-        if (film.getGenres() != null) {
-            HashSet<Integer> genreIds = film.getGenres().stream()
-                    .map(Genre::getId)
-                    .collect(Collectors.toCollection(HashSet::new));
-            filmGenreRepository.batchUpdate(new ArrayList<>(genreIds), film.getId());
+    @Override
+    public Collection<Film> getDirectorFilms(Integer directorId, String sortBy) {
+        Map<String, Object> params = new LinkedHashMap<>();
+
+        if (directorId != null) {
+            params.put("directorId", directorId);
         }
+
+        if (sortBy != null) {
+            params.put("sortBy", sortBy);
+        }
+
+        String sqlQuery = getSqlQuery(params);
+
+        log.info("FilmRepository - Получение фильмов режиссера из базы");
+        return namedParameterJdbcTemplate.query(sqlQuery, params, new FilmExtractor());
     }
 
     private String getSqlQuery(Map<String, Object> params) {
@@ -203,19 +222,24 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
                 SELECT f.film_id, f.name AS film_name, f.description AS film_description, f.release_date, f.duration,
                        m.mpa_id, m.name AS mpa_name, m.description AS mpa_description,
                        g.genre_id AS genre_id, g.NAME AS genre_name,
+                       d.director_id AS director_id, d.NAME AS director_name,
                 COUNT (l.film_id) AS rate
                 FROM FILMS AS f
                 JOIN MPA AS m ON f.mpa_id = m.mpa_id
                 LEFT JOIN FILM_GENRE FG on f.film_id = fg.film_id
                 LEFT JOIN GENRES AS g ON fg.genre_id = g.genre_id
+                LEFT JOIN FILM_DIRECTORS FD on f.film_id = fd.film_id
+                LEFT JOIN DIRECTORS AS d ON fd.director_id = d.director_id
                 LEFT JOIN LIKES AS l on f.film_id = l.film_id
                 """;
 
         String endSqlQuery = """
                 GROUP BY f.film_id, f.name, f.description, f.release_date, f.duration,
-                          m.mpa_id, m.name, m.description, g.genre_id, g.name
-                ORDER BY rate DESC
-                LIMIT :count
+                          m.mpa_id, m.name, m.description, g.genre_id, g.name, d.director_id, d.name
+                """;
+
+        String sqlWhereDirectorId = """
+                WHERE d.director_id = :directorId
                 """;
 
         String sqlWhereYear = """
@@ -230,6 +254,19 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
                 )
                 """;
 
+        String sqlOrderByYear = """
+                ORDER BY f.release_date ASC
+                """;
+
+        String sqlOrderByRate = """
+                ORDER BY rate DESC
+                """;
+
+        String sqlLimit = """
+                ORDER BY rate DESC
+                LIMIT :count
+                """;
+
         if (params.get("year") != null && params.get("genreId") != null) {
             sqlQuery = sqlQuery + sqlWhereYear + " AND " + sqlWhereGenre;
         }
@@ -242,6 +279,20 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
             sqlQuery = sqlQuery + " WHERE " + sqlWhereGenre;
         }
 
-        return sqlQuery + endSqlQuery;
+        if (params.get("directorId") != null) {
+            sqlQuery = sqlQuery + sqlWhereDirectorId + endSqlQuery;
+            if (params.get("sortBy").equals("year")) {
+                sqlQuery = sqlQuery + sqlOrderByYear;
+            }
+            if (params.get("sortBy").equals("likes")) {
+                sqlQuery = sqlQuery + sqlOrderByRate;
+            }
+        }
+
+        if (params.get("count") != null) {
+            sqlQuery = sqlQuery + endSqlQuery + sqlLimit;
+        }
+
+        return sqlQuery;
     }
 }

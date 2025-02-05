@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MPA;
@@ -23,9 +24,7 @@ public class FilmExtractor implements ResultSetExtractor<List<Film>> {
 
         while (resultSet.next()) {
             Integer filmKey = resultSet.getInt("film_id");
-
             film = filmHashMap.get(filmKey);
-
             if (film == null) {
                 film = new Film();
                 film.setId(filmKey);
@@ -40,18 +39,27 @@ public class FilmExtractor implements ResultSetExtractor<List<Film>> {
                         .description(resultSet.getString("mpa_description"))
                         .build());
                 film.setGenres(new HashSet<>());
+                film.setDirectors(new HashSet<>());
                 film.setRate(resultSet.getInt("rate"));
                 filmHashMap.putIfAbsent(filmKey, film);
             }
 
             int genreKey = resultSet.getInt("genre_id");
-
             if (genreKey > 0) {
                 Genre genre = Genre.builder()
                         .id(genreKey)
                         .name(resultSet.getString("genre_name"))
                         .build();
                 film.getGenres().add(genre);
+            }
+
+            int directorKey = resultSet.getInt("director_id");
+            if (directorKey > 0) {
+                Director director = Director.builder()
+                        .id(directorKey)
+                        .name(resultSet.getString("director_name"))
+                        .build();
+                film.getDirectors().add(director);
             }
         }
         return new ArrayList<>(filmHashMap.values());

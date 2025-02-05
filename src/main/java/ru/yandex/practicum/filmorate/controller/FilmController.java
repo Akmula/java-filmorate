@@ -20,7 +20,7 @@ public class FilmController {
     private final FilmService filmService;
 
     @PostMapping
-    public FilmDto createFilm(@Valid @RequestBody FilmRequest filmRequest) {
+    public FilmDto createFilm(@Valid @RequestBody final FilmRequest filmRequest) {
         log.info("POST /films - Запрос на добавление фильма: {}", filmRequest);
         FilmDto filmDto = filmService.createFilm(filmRequest);
         log.info("POST /films - Ответ на добавление фильма: {}", filmDto);
@@ -28,7 +28,7 @@ public class FilmController {
     }
 
     @PutMapping
-    public FilmDto updateFilm(@Valid @RequestBody FilmRequest filmRequest) {
+    public FilmDto updateFilm(@Valid @RequestBody final FilmRequest filmRequest) {
         log.info("PUT /films - Запрос на обновление фильма: {}", filmRequest);
         FilmDto filmDto = filmService.updateFilm(filmRequest);
         log.info("PUT /films - Ответ на обновление фильма: {}", filmDto);
@@ -82,5 +82,11 @@ public class FilmController {
     public Collection<FilmDto> getCommonFilms(@RequestParam(name = "userId") int userId,
                                               @RequestParam(name = "friendId") int friendId) {
         return filmService.getCommonFilms(userId, friendId);
+    }
+
+    @GetMapping("/director/{directorId}")
+    public Collection<FilmDto> getDirectorFilms(@PathVariable("directorId") Integer directorId,
+                                                @RequestParam String sortBy) {
+        return filmService.getDirectorFilms(directorId, sortBy);
     }
 }
