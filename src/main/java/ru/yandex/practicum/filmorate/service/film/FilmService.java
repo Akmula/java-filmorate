@@ -129,7 +129,14 @@ public class FilmService {
     }
 
     public Collection<FilmDto> getDirectorFilms(Integer directorId, String sortBy) {
+        log.info("FilmService - получение фильмов режиссера с id {}.", directorId);
         return filmStorage.getDirectorFilms(directorId, sortBy)
+                .stream().map(FilmMapper::mapToFilmDto).toList();
+    }
+
+    public Collection<FilmDto> search(String query, String by) {
+        log.info("FilmService - поиск фиьмов по запросу {}.", query);
+        return filmStorage.search(query, by)
                 .stream().map(FilmMapper::mapToFilmDto).toList();
     }
 

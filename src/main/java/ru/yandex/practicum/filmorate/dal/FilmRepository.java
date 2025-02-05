@@ -216,6 +216,17 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
         return namedParameterJdbcTemplate.query(sqlQuery, params, new FilmExtractor());
     }
 
+    @Override
+    public Collection<Film> search(String query, String by) {
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("query", query.toLowerCase());
+        params.put("by", by);
+
+        String sqlQuery = getSqlQuery(params);
+        log.info("FilmRepository - Поиск фильмов по запросу - {}", query);
+        return namedParameterJdbcTemplate.query(sqlQuery, params, new FilmExtractor());
+    }
+
     private String getSqlQuery(Map<String, Object> params) {
 
         String sqlQuery = """
@@ -286,6 +297,21 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
             }
             if (params.get("sortBy").equals("likes")) {
                 sqlQuery = sqlQuery + sqlOrderByRate;
+            }
+        }
+
+        if (params.get("query") != null) {
+            String byDirector = "d.name ILIKE '%" + params.get("query") + "%' ";
+            String byTitle = "f.name ILIKE '%" + params.get("query") + "%' ";
+
+            if (params.get("by").equals("director")) {
+                sqlQuery = sqlQuery + " WHERE " + byDirector + endSqlQuery;
+            }
+            if (params.get("by").equals("title")) {
+                sqlQuery = sqlQuery + " WHERE " + byTitle + endSqlQuery;
+            }
+            if (params.get("by").equals("title,director") || params.get("by").equals("director,title")) {
+                sqlQuery = sqlQuery + " WHERE " + byDirector + " OR " + byTitle + endSqlQuery;
             }
         }
 
