@@ -7,8 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.context.annotation.ComponentScan;
+import ru.yandex.practicum.filmorate.dal.FilmLikeRepository;
 import ru.yandex.practicum.filmorate.dal.FilmRepository;
-import ru.yandex.practicum.filmorate.dal.LikeRepository;
 import ru.yandex.practicum.filmorate.dal.UserRepository;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.MPA;
@@ -29,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class FilmRepositoryTest {
     private final UserRepository userStorage;
     private final FilmRepository filmStorage;
-    private final LikeRepository likeStorage;
+    private final FilmLikeRepository likeStorage;
     Film newFilm;
     User newUser;
 

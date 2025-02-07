@@ -9,6 +9,7 @@ import ru.yandex.practicum.filmorate.dal.MPARepository;
 import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.dto.FilmRequest;
 import ru.yandex.practicum.filmorate.exceptions.FilmNotFoundException;
+import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.UserNotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
@@ -140,7 +141,7 @@ public class FilmService {
                 .stream().map(FilmMapper::mapToFilmDto).toList();
     }
 
-    private void validate(Integer filmId, Integer userId) {
+    public void validate(Integer filmId, Integer userId) {
         log.info("FilmService - проверка в базе фильма с id - {} и пользователя с id - {}", filmId, userId);
         Optional<Film> film = filmStorage.getFilmById(filmId);
         if (film.isEmpty()) {
@@ -159,7 +160,7 @@ public class FilmService {
         if (filmRequest.getMpa() != null) {
             int mpaId = filmRequest.getMpa().getId();
             filmRequest.setMpa(mpaRepository.getMpaById(mpaId)
-                    .orElseThrow(() -> new ValidationException("Категория с id - " + mpaId + " не найдена")));
+                    .orElseThrow(() -> new NotFoundException("Категория с id - " + mpaId + " не найдена")));
         } else {
             filmRequest.setMpa(MPA.builder().build());
         }
@@ -169,7 +170,7 @@ public class FilmService {
             for (Genre genre : filmRequest.getGenres()) {
                 int genreId = genre.getId();
                 genres.add(genreRepository.getGenreById(genreId)
-                        .orElseThrow(() -> new ValidationException("Жанр с id - " + genreId + " не найден")));
+                        .orElseThrow(() -> new NotFoundException("Жанр с id - " + genreId + " не найден")));
             }
             filmRequest.setGenres(genres);
         } else {
@@ -181,7 +182,7 @@ public class FilmService {
             for (Director director : filmRequest.getDirectors()) {
                 int directorId = director.getId();
                 directors.add(directorRepository.getDirectorById(directorId)
-                        .orElseThrow(() -> new ValidationException("Режиссер с id - " + directorId + " не найден")));
+                        .orElseThrow(() -> new NotFoundException("Режиссер с id - " + directorId + " не найден")));
             }
             filmRequest.setDirectors(directors);
         } else {
