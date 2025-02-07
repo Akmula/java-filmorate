@@ -4,13 +4,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
-import ru.yandex.practicum.filmorate.model.Like;
+import ru.yandex.practicum.filmorate.model.FilmLike;
 
 import java.util.Collection;
 
 @Slf4j
 @Repository
-public class LikeRepository extends BaseRepository<Like> {
+public class FilmLikeRepository extends BaseRepository<FilmLike> {
 
     private static final String ADD_LIKE_QUERY = """
             INSERT INTO LIKES (film_id, user_id)
@@ -29,22 +29,22 @@ public class LikeRepository extends BaseRepository<Like> {
             AND user_id = ?
             """;
 
-    public LikeRepository(JdbcTemplate jdbcTemplate, RowMapper<Like> likeRowMapper) {
+    public FilmLikeRepository(JdbcTemplate jdbcTemplate, RowMapper<FilmLike> likeRowMapper) {
         super(jdbcTemplate, likeRowMapper);
     }
 
     public void addLikeFilm(Integer filmId, Integer userId) {
-        log.info("LikeRepository - Добавление лайка фильму с id -  {}", filmId);
+        log.info("FilmLikeRepository - Добавление лайка фильму с id -  {}", filmId);
         insertToDatabase(ADD_LIKE_QUERY, filmId, userId);
     }
 
-    public Collection<Like> getLikeFilm(Integer filmId) {
-        log.info("LikeRepository - Получение лайков у фильма с id -  {}", filmId);
+    public Collection<FilmLike> getLikeFilm(Integer filmId) {
+        log.info("FilmLikeRepository - Получение лайков у фильма с id -  {}", filmId);
         return getAll(GET_BY_FILM_ID_QUERY, filmId);
     }
 
     public void deleteLikeFilm(Integer filmId, Integer userId) {
-        log.info("LikeRepository - Удаление лайка у фильма с id -  {}", filmId);
+        log.info("FilmLikeRepository - Удаление лайка у фильма с id -  {}", filmId);
         delete(DELETE_LIKE_QUERY, filmId, userId);
     }
 }

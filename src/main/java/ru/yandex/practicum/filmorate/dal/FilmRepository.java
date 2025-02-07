@@ -17,7 +17,7 @@ import java.util.*;
 public class FilmRepository extends BaseRepository<Film> implements FilmStorage {
 
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
-    private final LikeRepository likeRepository;
+    private final FilmLikeRepository filmLikeRepository;
     private final FilmGenreRepository filmGenreRepository;
 
     private static final String INSERT_FILM_QUERY = """
@@ -96,11 +96,10 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     private final FilmDirectorsRepository filmDirectorsRepository;
 
     public FilmRepository(JdbcTemplate jdbcTemplate, FilmRowMapper filmRowMapper,
-
-
-                          LikeRepository likeRepository, FilmGenreRepository filmGenreRepository, FilmDirectorsRepository filmDirectorsRepository) {
+                          FilmLikeRepository filmLikeRepository, FilmGenreRepository filmGenreRepository,
+                          FilmDirectorsRepository filmDirectorsRepository) {
         super(jdbcTemplate, filmRowMapper);
-        this.likeRepository = likeRepository;
+        this.filmLikeRepository = filmLikeRepository;
         this.filmGenreRepository = filmGenreRepository;
         this.namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
         this.filmDirectorsRepository = filmDirectorsRepository;
@@ -165,13 +164,13 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     @Override
     public void addLikeFilm(Integer filmId, Integer userId) {
         log.info("FilmRepository - Добавление лайка фильму");
-        likeRepository.addLikeFilm(filmId, userId);
+        filmLikeRepository.addLikeFilm(filmId, userId);
     }
 
     @Override
     public void deleteLikeFilm(Integer filmId, Integer userId) {
         log.info("FilmRepository - Удаление лайка у фильма");
-        likeRepository.deleteLikeFilm(filmId, userId);
+        filmLikeRepository.deleteLikeFilm(filmId, userId);
     }
 
     @Override
