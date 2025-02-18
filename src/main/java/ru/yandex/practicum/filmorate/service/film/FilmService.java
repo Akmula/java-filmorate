@@ -9,12 +9,12 @@ import ru.yandex.practicum.filmorate.dal.MPARepository;
 import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.dto.FilmRequest;
 import ru.yandex.practicum.filmorate.exceptions.FilmNotFoundException;
-import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.UserNotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.model.*;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.user.EventStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
@@ -32,19 +32,20 @@ public class FilmService {
     private final MPARepository mpaRepository;
     private final GenreRepository genreRepository;
     private final DirectorRepository directorRepository;
-
+    private final EventStorage eventStorage;
 
     public FilmService(@Qualifier("filmRepository") FilmStorage filmStorage,
                        @Qualifier("userRepository") UserStorage userStorage,
                        MPARepository mpaRepository,
                        GenreRepository genreRepository,
-                       DirectorRepository directorRepository
-    ) {
+                       DirectorRepository directorRepository,
+                       EventStorage eventStorage) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
         this.genreRepository = genreRepository;
         this.mpaRepository = mpaRepository;
         this.directorRepository = directorRepository;
+        this.eventStorage = eventStorage;
     }
 
     public FilmDto createFilm(FilmRequest request) {
@@ -101,6 +102,7 @@ public class FilmService {
         log.info("FilmService - Добавление лайка фильм с id - {}, от пользователя с id - {}", filmId, userId);
         validate(filmId, userId);
         filmStorage.addLikeFilm(filmId, userId);
+        eventStorage.createEvent(userId, Operation.ADD, EventType.LIKE, filmId);
         log.info("FilmService - Пользователь с id - {} поставил лайк фильму с id - {}", userId, filmId);
         return getFilmById(filmId);
     }
@@ -109,6 +111,7 @@ public class FilmService {
         log.info("FilmService - Удаление лайка из фильма с id - {}, пользователем с id - {}", filmId, userId);
         validate(filmId, userId);
         filmStorage.deleteLikeFilm(filmId, userId);
+        eventStorage.createEvent(userId, Operation.REMOVE, EventType.LIKE, filmId);
         log.info("FilmService - Пользователь с id - {} удалил лайк у фильма с id - {}", userId, filmId);
         return getFilmById(filmId);
     }
@@ -160,7 +163,7 @@ public class FilmService {
         if (filmRequest.getMpa() != null) {
             int mpaId = filmRequest.getMpa().getId();
             filmRequest.setMpa(mpaRepository.getMpaById(mpaId)
-                    .orElseThrow(() -> new NotFoundException("Категория с id - " + mpaId + " не найдена")));
+                    .orElseThrow(() -> new ValidationException("Категория с id - " + mpaId + " не найдена")));
         } else {
             filmRequest.setMpa(MPA.builder().build());
         }
@@ -170,7 +173,7 @@ public class FilmService {
             for (Genre genre : filmRequest.getGenres()) {
                 int genreId = genre.getId();
                 genres.add(genreRepository.getGenreById(genreId)
-                        .orElseThrow(() -> new NotFoundException("Жанр с id - " + genreId + " не найден")));
+                        .orElseThrow(() -> new ValidationException("Жанр с id - " + genreId + " не найден")));
             }
             filmRequest.setGenres(genres);
         } else {
@@ -182,7 +185,7 @@ public class FilmService {
             for (Director director : filmRequest.getDirectors()) {
                 int directorId = director.getId();
                 directors.add(directorRepository.getDirectorById(directorId)
-                        .orElseThrow(() -> new NotFoundException("Режиссер с id - " + directorId + " не найден")));
+                        .orElseThrow(() -> new ValidationException("Режиссер с id - " + directorId + " не найден")));
             }
             filmRequest.setDirectors(directors);
         } else {
