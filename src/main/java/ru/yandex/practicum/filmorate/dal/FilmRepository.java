@@ -19,6 +19,7 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
     private final FilmLikeRepository filmLikeRepository;
     private final FilmGenreRepository filmGenreRepository;
+    private final FilmDirectorsRepository filmDirectorsRepository;
 
     private static final String INSERT_FILM_QUERY = """
             INSERT INTO FILMS
@@ -93,7 +94,6 @@ public class FilmRepository extends BaseRepository<Film> implements FilmStorage 
             GROUP BY f.film_id, f.name, f.description, f.release_date, f.duration,
                      m.mpa_id, m.name, m.description, g.genre_id, g.name, d.director_id, d.name
             """;
-    private final FilmDirectorsRepository filmDirectorsRepository;
 
     public FilmRepository(JdbcTemplate jdbcTemplate, FilmRowMapper filmRowMapper,
                           FilmLikeRepository filmLikeRepository, FilmGenreRepository filmGenreRepository,

@@ -3,15 +3,18 @@ package ru.yandex.practicum.filmorate.service.user;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dto.EventDto;
 import ru.yandex.practicum.filmorate.dto.UserDto;
 import ru.yandex.practicum.filmorate.dto.UserRequest;
 import ru.yandex.practicum.filmorate.exceptions.DuplicateFoundException;
 import ru.yandex.practicum.filmorate.exceptions.InternalServerException;
 import ru.yandex.practicum.filmorate.exceptions.UserNotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
+import ru.yandex.practicum.filmorate.mapper.EventMapper;
 import ru.yandex.practicum.filmorate.mapper.UserMapper;
 import ru.yandex.practicum.filmorate.model.Friendship;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.user.EventStorage;
 import ru.yandex.practicum.filmorate.storage.user.FriendshipStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
@@ -20,15 +23,22 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static ru.yandex.practicum.filmorate.model.EventType.FRIEND;
+import static ru.yandex.practicum.filmorate.model.Operation.ADD;
+import static ru.yandex.practicum.filmorate.model.Operation.REMOVE;
+
 @Slf4j
 @Service
 public class UserService {
     private final UserStorage userStorage;
     private final FriendshipStorage friendshipStorage;
+    private final EventStorage eventStorage;
 
-    public UserService(@Qualifier("userRepository") UserStorage userStorage, FriendshipStorage friendshipStorage) {
+    public UserService(@Qualifier("userRepository") UserStorage userStorage, FriendshipStorage friendshipStorage,
+                       EventStorage eventStorage) {
         this.userStorage = userStorage;
         this.friendshipStorage = friendshipStorage;
+        this.eventStorage = eventStorage;
     }
 
     public UserDto createUser(UserRequest request) {
@@ -93,6 +103,7 @@ public class UserService {
         UserDto userDto = checkUser(userId);
         Boolean isFriend = validateFriendship(userId, friendId);
         friendshipStorage.addFriend(userId, friendId, isFriend);
+        eventStorage.createEvent(userId, ADD, FRIEND, friendId);
         log.info("UserService - Пользователь с id - {}, добавлен в друзья пользователя с id - {}.", friendId, userId);
         return userDto;
     }
@@ -111,6 +122,7 @@ public class UserService {
         friendshipStorage.deleteFriend(userId, friendId);
         Integer friendshipId = friendshipStorage.getFriendshipId(userId, friendId);
         friendshipStorage.updateFriendship(friendshipId, false);
+        eventStorage.createEvent(userId, REMOVE, FRIEND, friendId);
         log.info("UserService - Пользователь с id - {}, удалил из друзей пользователя - {}.", userId, friendDto);
         return friendDto;
     }
@@ -121,6 +133,13 @@ public class UserService {
         Collection<UserDto> friendsDto = UserMapper.mapToUserDtoList(userStorage.getCommonFriends(userId, otherId));
         log.info("UserService - Получен список общих друзей - {}", friendsDto);
         return friendsDto;
+    }
+
+    public Collection<EventDto> getFeed(Integer userId) {
+        log.info("UserService - Получение событий пользователя с id - {}!", userId);
+        Collection<EventDto> eventsDto = EventMapper.mapToEventDtoList(eventStorage.getEventsByUserId(userId));
+        log.info("UserService - Получен список событий пользователя - {}", eventsDto);
+        return eventsDto;
     }
 
     private UserDto checkUser(Integer userId) {
