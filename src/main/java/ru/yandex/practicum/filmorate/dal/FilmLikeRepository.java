@@ -6,7 +6,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.FilmLike;
 
-import java.util.Collection;
+import java.util.List;
 
 @Slf4j
 @Repository
@@ -17,11 +17,9 @@ public class FilmLikeRepository extends BaseRepository<FilmLike> {
             VALUES (?, ?)
             """;
 
-    private static final String GET_ALL_LIKE_QUERY = """
-            SELECT * FROM LIKES
-            """;
+    private static final String GET_FILM_IDS_BY_USER_ID_QUERY = "SELECT film_id FROM LIKES WHERE user_id = ?";
 
-    private static final String GET_BY_FILM_ID_QUERY = GET_ALL_LIKE_QUERY + " WHERE film_id = ?";
+    private static final String GET_USER_IDS_BY_FILM_ID_QUERY = "SELECT user_id FROM LIKES  WHERE film_id = ?";
 
     private static final String DELETE_LIKE_QUERY = """
             DELETE FROM LIKES
@@ -38,9 +36,14 @@ public class FilmLikeRepository extends BaseRepository<FilmLike> {
         insertToDatabase(ADD_LIKE_QUERY, filmId, userId);
     }
 
-    public Collection<FilmLike> getLikeFilm(Integer filmId) {
-        log.info("FilmLikeRepository - Получение лайков у фильма с id -  {}", filmId);
-        return getAll(GET_BY_FILM_ID_QUERY, filmId);
+    public List<Integer> getFilmIdsByUserId(Integer userId) {
+        log.info("FilmLikeRepository - Получение id фильмов по id пользователя - {}", userId);
+        return getAsList(GET_FILM_IDS_BY_USER_ID_QUERY, userId);
+    }
+
+    public List<Integer> getUserIdsByFilmId(Integer filmId) {
+        log.info("FilmLikeRepository - Получение лайков по id фильма - {}", filmId);
+        return getAsList(GET_USER_IDS_BY_FILM_ID_QUERY, filmId);
     }
 
     public void deleteLikeFilm(Integer filmId, Integer userId) {

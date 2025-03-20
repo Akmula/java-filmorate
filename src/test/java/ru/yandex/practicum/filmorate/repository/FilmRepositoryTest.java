@@ -106,7 +106,7 @@ class FilmRepositoryTest {
         final int filmId = newFilm.getId();
         final int userId = newUser.getId();
         filmStorage.addLikeFilm(filmId, userId);
-        assertEquals(1, likeStorage.getLikeFilm(filmId).size());
+        assertEquals(1, likeStorage.getUserIdsByFilmId(filmId).size());
     }
 
     @Test
@@ -117,7 +117,7 @@ class FilmRepositoryTest {
         final int userId = newUser.getId();
         filmStorage.addLikeFilm(filmId, userId);
         filmStorage.deleteLikeFilm(filmId, userId);
-        assertEquals(0, likeStorage.getLikeFilm(filmId).size());
+        assertEquals(0, likeStorage.getUserIdsByFilmId(filmId).size());
     }
 
     @Test
