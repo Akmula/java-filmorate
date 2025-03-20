@@ -1,9 +1,6 @@
 package ru.yandex.practicum.filmorate.dto;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.Past;
+import jakarta.validation.constraints.*;
 import lombok.Builder;
 import lombok.Data;
 
@@ -19,11 +16,12 @@ public class UserRequest {
     private String login;
 
     @NotEmpty(message = "Электронная почта не может быть пустой и должна содержать символ @!")
-    @Email(message = "Электронная почта не может быть пустой и должна содержать символ @!!")
+    @Email(message = "Электронная почта не может быть пустой и должна содержать символ @!")
     private String email;
 
     private String name;
 
     @Past(message = "Дата рождения не может быть в будущем!")
+    @NotNull(message = "Дата рождения не может быть null!")
     private LocalDate birthday;
 }
