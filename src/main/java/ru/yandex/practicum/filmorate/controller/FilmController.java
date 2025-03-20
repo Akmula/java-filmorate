@@ -20,7 +20,7 @@ public class FilmController {
     private final FilmService filmService;
 
     @PostMapping
-    public FilmDto createFilm(@Valid @RequestBody FilmRequest filmRequest) {
+    public FilmDto createFilm(@Valid @RequestBody final FilmRequest filmRequest) {
         log.info("POST /films - Запрос на добавление фильма: {}", filmRequest);
         FilmDto filmDto = filmService.createFilm(filmRequest);
         log.info("POST /films - Ответ на добавление фильма: {}", filmDto);
@@ -28,11 +28,17 @@ public class FilmController {
     }
 
     @PutMapping
-    public FilmDto updateFilm(@Valid @RequestBody FilmRequest filmRequest) {
+    public FilmDto updateFilm(@Valid @RequestBody final FilmRequest filmRequest) {
         log.info("PUT /films - Запрос на обновление фильма: {}", filmRequest);
         FilmDto filmDto = filmService.updateFilm(filmRequest);
         log.info("PUT /films - Ответ на обновление фильма: {}", filmDto);
         return filmDto;
+    }
+
+    @DeleteMapping("/{filmId}")
+    public FilmDto deleteFilm(@PathVariable int filmId) {
+        log.info("DELETE /films - Запрос на удаление фильма по ID: {}", filmId);
+        return filmService.deleteFilm(filmId);
     }
 
     @GetMapping
@@ -62,10 +68,30 @@ public class FilmController {
     }
 
     @GetMapping("/popular")
-    public Collection<FilmDto> getPopularFilms(@RequestParam(defaultValue = "10") int count) {
-        log.info("GET /films - Запрос на получение популярных фильмов. Выводить: {} фильмов", count);
-        Collection<FilmDto> response = filmService.getPopularFilms(count);
+    public Collection<FilmDto> getPopularFilms(@RequestParam(defaultValue = "10") int count,
+                                               @RequestParam(name = "genreId", required = false) Integer genreId,
+                                               @RequestParam(name = "year", required = false) Integer year) {
+        log.info("GET /films - Запрос на получение популярных фильмов по параметрам {} и {}. Выводить: {} фильмов",
+                genreId, year, count);
+        Collection<FilmDto> response = filmService.getPopularFilms(count, genreId, year);
         log.info("GET /films - Ответ на получение популярных фильмов: {}", response);
         return response;
+    }
+
+    @GetMapping("/common")
+    public Collection<FilmDto> getCommonFilms(@RequestParam(name = "userId") int userId,
+                                              @RequestParam(name = "friendId") int friendId) {
+        return filmService.getCommonFilms(userId, friendId);
+    }
+
+    @GetMapping("/director/{directorId}")
+    public Collection<FilmDto> getDirectorFilms(@PathVariable("directorId") Integer directorId,
+                                                @RequestParam String sortBy) {
+        return filmService.getDirectorFilms(directorId, sortBy);
+    }
+
+    @GetMapping("/search")
+    public Collection<FilmDto> search(@RequestParam String query, @RequestParam String by) {
+        return filmService.search(query, by);
     }
 }

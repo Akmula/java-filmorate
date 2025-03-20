@@ -4,6 +4,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.dto.EventDto;
+import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.dto.UserDto;
 import ru.yandex.practicum.filmorate.dto.UserRequest;
 import ru.yandex.practicum.filmorate.service.user.UserService;
@@ -35,6 +37,12 @@ public class UserController {
         return userDto;
     }
 
+    @DeleteMapping("/{userId}")
+    public UserDto deleteUser(@PathVariable int userId) {
+        log.info("DELETE /users - Запрос на удаление пользователя: {}", userId);
+        return userService.deleteUser(userId);
+    }
+
     @GetMapping
     public Collection<UserDto> getUsers() {
         log.info("GET /users - Запрос на получение пользователей");
@@ -52,7 +60,7 @@ public class UserController {
     @PutMapping("/{userId}/friends/{friendId}")
     public UserDto addFriend(@PathVariable int userId, @PathVariable int friendId) {
         log.info("PUT /users - Запрос на добавление в друзья пользователя с id: {}," +
-                " от пользователя: {}", friendId, userId);
+                 " от пользователя: {}", friendId, userId);
         return userService.addFriend(userId, friendId);
     }
 
@@ -65,14 +73,26 @@ public class UserController {
     @DeleteMapping("/{userId}/friends/{friendId}")
     public UserDto deleteFriend(@PathVariable int userId, @PathVariable int friendId) {
         log.info("DELETE /users - Запрос на удаление из друзей пользователя с id: {}," +
-                " от пользователя: {}", friendId, userId);
+                 " от пользователя: {}", friendId, userId);
         return userService.deleteFriend(userId, friendId);
     }
 
     @GetMapping("/{userId}/friends/common/{otherId}")
     public Collection<UserDto> getCommonFriends(@PathVariable int userId, @PathVariable int otherId) {
         log.info("GET /users - Запрос на получение общих друзей пользователя с id: {}," +
-                " с пользователем id: {}", userId, otherId);
+                 " с пользователем id: {}", userId, otherId);
         return userService.getCommonFriends(userId, otherId);
+    }
+
+    @GetMapping("/{userId}/feed")
+    public Collection<EventDto> getFeed(@PathVariable int userId) {
+        log.info("GET /users - Запрос на просмотр последних событий пользователя с id: {}!", userId);
+        return userService.getFeed(userId);
+    }
+
+    @GetMapping("/{userId}/recommendations")
+    public Collection<FilmDto> getRecommendations(@PathVariable int userId) {
+        log.info("GET /users - Запрос рекомендаций для пользователя с id: {}!", userId);
+        return userService.getRecommendations(userId);
     }
 }

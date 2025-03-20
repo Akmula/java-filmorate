@@ -7,8 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.context.annotation.ComponentScan;
+import ru.yandex.practicum.filmorate.dal.FilmLikeRepository;
 import ru.yandex.practicum.filmorate.dal.FilmRepository;
-import ru.yandex.practicum.filmorate.dal.LikeRepository;
 import ru.yandex.practicum.filmorate.dal.UserRepository;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.MPA;
@@ -29,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class FilmRepositoryTest {
     private final UserRepository userStorage;
     private final FilmRepository filmStorage;
-    private final LikeRepository likeStorage;
+    private final FilmLikeRepository likeStorage;
     Film newFilm;
     User newUser;
 
@@ -106,7 +106,7 @@ class FilmRepositoryTest {
         final int filmId = newFilm.getId();
         final int userId = newUser.getId();
         filmStorage.addLikeFilm(filmId, userId);
-        assertEquals(1, likeStorage.getLikeFilm(filmId).size());
+        assertEquals(1, likeStorage.getUserIdsByFilmId(filmId).size());
     }
 
     @Test
@@ -117,7 +117,7 @@ class FilmRepositoryTest {
         final int userId = newUser.getId();
         filmStorage.addLikeFilm(filmId, userId);
         filmStorage.deleteLikeFilm(filmId, userId);
-        assertEquals(0, likeStorage.getLikeFilm(filmId).size());
+        assertEquals(0, likeStorage.getUserIdsByFilmId(filmId).size());
     }
 
     @Test
@@ -128,7 +128,7 @@ class FilmRepositoryTest {
         final int filmId = newFilm.getId();
         final int userId = newUser.getId();
         filmStorage.addLikeFilm(filmId, userId);
-        Collection<Film> popular = filmStorage.getPopularFilms(3);
+        Collection<Film> popular = filmStorage.getPopularFilms(3, null, null);
         Film popularFilm = popular.stream().findFirst().orElse(null);
         assert popularFilm != null;
         assertEquals(filmId, popularFilm.getId());

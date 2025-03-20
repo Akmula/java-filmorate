@@ -27,6 +27,11 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
             WHERE user_id = ?
             """;
 
+    private static final String DELETE_USER_QUERY = """
+            DELETE FROM USERS
+            WHERE user_id = ?
+            """;
+
     private static final String GET_ALL_USERS_QUERY = """
             SELECT * FROM USERS
             """;
@@ -96,6 +101,12 @@ public class UserRepository extends BaseRepository<User> implements UserStorage 
         );
         log.info("UserRepository - Пользователь {} обновлен", user);
         return user;
+    }
+
+    @Override
+    public void deleteUser(User user) {
+        log.info("UserRepository - Удаление пользователя {} из базы", user);
+        update(DELETE_USER_QUERY, user.getId());
     }
 
     @Override

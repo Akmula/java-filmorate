@@ -15,17 +15,17 @@ import java.util.Optional;
 public class GenreRepository extends BaseRepository<Genre> implements GenreStorage {
 
     private static final String GET_ALL_GENRES_QUERY = """
-            SELECT * FROM GENRES
+            SELECT genre_id, name AS genre_name FROM GENRES
             ORDER BY genre_id ASC
             """;
 
     private static final String GET_GENRE_BY_ID_QUERY = """
-            SELECT * FROM GENRES
+            SELECT genre_id, name AS genre_name FROM GENRES
             WHERE genre_id = ?
             """;
 
     private static final String GET_GENRES_BY_FILM_ID_QUERY = """
-            SELECT g.*, fg.film_id AS film_id
+            SELECT g.genre_id AS genre_id, g.name AS genre_name, fg.film_id AS film_id
             FROM GENRES AS g
             JOIN FILM_GENRE AS fg ON g.genre_id = fg.genre_id
             WHERE film_id = ?

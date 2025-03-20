@@ -10,7 +10,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
-import java.util.Collection;
 import java.util.Set;
 
 @Data
@@ -32,7 +31,8 @@ public class Film {
     private Integer duration;
     private MPA mpa;
 
-    private Collection<Genre> genres;
+    private Set<Genre> genres;
+    private Set<Director> directors;
 
     @JsonIgnore
     private Set<Integer> likes;

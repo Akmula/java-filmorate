@@ -11,6 +11,8 @@ public interface UserStorage {
 
     User updateUser(User user);
 
+    void deleteUser(User user);
+
     Optional<User> getUserById(Integer userId);
 
     Optional<User> getUserByLogin(String login);

@@ -4,11 +4,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Data;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MPA;
 
 import java.time.LocalDate;
-import java.util.Collection;
 import java.util.Set;
 
 @Data
@@ -21,7 +21,8 @@ public class FilmDto {
     private LocalDate releaseDate;
     private Integer duration;
     private MPA mpa;
-    private Collection<Genre> genres;
+    private Set<Genre> genres;
+    private Set<Director> directors;
 
     @JsonIgnore
     private Set<Integer> likes;

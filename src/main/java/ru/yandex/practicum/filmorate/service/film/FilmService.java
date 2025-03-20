@@ -3,8 +3,8 @@ package ru.yandex.practicum.filmorate.service.film;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dal.DirectorRepository;
 import ru.yandex.practicum.filmorate.dal.GenreRepository;
-import ru.yandex.practicum.filmorate.dal.LikeRepository;
 import ru.yandex.practicum.filmorate.dal.MPARepository;
 import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.dto.FilmRequest;
@@ -12,11 +12,9 @@ import ru.yandex.practicum.filmorate.exceptions.FilmNotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.UserNotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.MPA;
-import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.*;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.user.EventStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
@@ -33,24 +31,26 @@ public class FilmService {
     private final UserStorage userStorage;
     private final MPARepository mpaRepository;
     private final GenreRepository genreRepository;
-    private final LikeRepository likeRepository;
-
+    private final DirectorRepository directorRepository;
+    private final EventStorage eventStorage;
 
     public FilmService(@Qualifier("filmRepository") FilmStorage filmStorage,
                        @Qualifier("userRepository") UserStorage userStorage,
                        MPARepository mpaRepository,
-                       GenreRepository genreRepository, LikeRepository likeRepository
-    ) {
+                       GenreRepository genreRepository,
+                       DirectorRepository directorRepository,
+                       EventStorage eventStorage) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
         this.genreRepository = genreRepository;
         this.mpaRepository = mpaRepository;
-        this.likeRepository = likeRepository;
+        this.directorRepository = directorRepository;
+        this.eventStorage = eventStorage;
     }
 
     public FilmDto createFilm(FilmRequest request) {
         log.info("FilmService - Создание фильма - {}", request);
-        FilmRequest updatedRequest = updateMpaAndGenresForRequest(request);
+        FilmRequest updatedRequest = updateFieldsForRequest(request);
         Film film = FilmMapper.mapToFilm(updatedRequest);
         FilmDto filmDto = FilmMapper.mapToFilmDto(filmStorage.createFilm(film));
         log.info("FilmService - Добавлен фильм - {}", filmDto);
@@ -59,7 +59,7 @@ public class FilmService {
 
     public FilmDto updateFilm(FilmRequest request) {
         log.info("FilmService - Обновление фильма");
-        FilmRequest updatedRequest = updateMpaAndGenresForRequest(request);
+        FilmRequest updatedRequest = updateFieldsForRequest(request);
         Film updatedFilm = filmStorage.getFilmById(request.getId())
                 .map(film -> FilmMapper.updateFilmFields(film, updatedRequest))
                 .orElseThrow(() -> new FilmNotFoundException(updatedRequest.getId()));
@@ -69,18 +69,21 @@ public class FilmService {
         return filmDto;
     }
 
+    public FilmDto deleteFilm(Integer filmId) {
+        log.info("FilmService - Удаление фильма");
+        Film deletedFilm = filmStorage.getFilmById(filmId)
+                .orElseThrow(() -> new FilmNotFoundException(filmId));
+        filmStorage.deleteFilm(deletedFilm);
+        FilmDto filmDto = FilmMapper.mapToFilmDto(deletedFilm);
+        log.info("FilmService - Удаленный фильм: {}", filmDto);
+        return filmDto;
+    }
+
     public Collection<FilmDto> getAllFilms() {
         log.info("FilmService - Получение всех фильмов");
         Collection<FilmDto> filmsDto = filmStorage.getAllFilms()
                 .stream().map(FilmMapper::mapToFilmDto).toList();
 
-        filmsDto.forEach(filmDto -> {
-            filmDto.setGenres(genreRepository.getGenresByFilmId(filmDto.getId()));
-            Set<Integer> likeIds = new HashSet<>();
-            likeRepository.getLikeFilm(filmDto.getId()).forEach(like -> likeIds.add(like.getUserId()));
-            filmDto.setLikes(likeIds);
-            filmDto.setRate(likeIds.size());
-        });
         log.info("FilmService - Список всех фильмов получен");
         return filmsDto;
     }
@@ -91,13 +94,6 @@ public class FilmService {
                 .map(FilmMapper::mapToFilmDto)
                 .orElseThrow(() -> new FilmNotFoundException(filmId));
 
-        Collection<Genre> filmGenres = genreRepository.getGenresByFilmId(filmId);
-        Set<Integer> likeIds = new HashSet<>();
-        likeRepository.getLikeFilm(filmId).forEach(like -> likeIds.add(like.getUserId()));
-
-        filmDto.setGenres(filmGenres);
-        filmDto.setLikes(likeIds);
-        filmDto.setRate(likeIds.size());
         log.info("FilmService - Получен фильм по id - {}", filmDto);
         return filmDto;
     }
@@ -106,6 +102,7 @@ public class FilmService {
         log.info("FilmService - Добавление лайка фильм с id - {}, от пользователя с id - {}", filmId, userId);
         validate(filmId, userId);
         filmStorage.addLikeFilm(filmId, userId);
+        eventStorage.createEvent(userId, Operation.ADD, EventType.LIKE, filmId);
         log.info("FilmService - Пользователь с id - {} поставил лайк фильму с id - {}", userId, filmId);
         return getFilmById(filmId);
     }
@@ -114,28 +111,40 @@ public class FilmService {
         log.info("FilmService - Удаление лайка из фильма с id - {}, пользователем с id - {}", filmId, userId);
         validate(filmId, userId);
         filmStorage.deleteLikeFilm(filmId, userId);
+        eventStorage.createEvent(userId, Operation.REMOVE, EventType.LIKE, filmId);
         log.info("FilmService - Пользователь с id - {} удалил лайк у фильма с id - {}", userId, filmId);
         return getFilmById(filmId);
     }
 
-    public Collection<FilmDto> getPopularFilms(Integer count) {
-        log.info("FilmService - получение популярных фильмов. Выводить {} фильмов", count);
-        List<FilmDto> popularMovies = filmStorage.getPopularFilms(count)
+    public Collection<FilmDto> getPopularFilms(Integer count, Integer genreId, Integer year) {
+        log.info("FilmService - получение популярных фильмов по параметрам {} и {}. Выводить {} фильмов",
+                count, genreId, year);
+        List<FilmDto> popularMovies = filmStorage.getPopularFilms(count, genreId, year)
                 .stream().map(FilmMapper::mapToFilmDto).toList();
-
-        for (FilmDto filmDto : popularMovies) {
-            Set<Integer> likeIds = new HashSet<>();
-            filmDto.setGenres(genreRepository.getGenresByFilmId(filmDto.getId()));
-            likeRepository.getLikeFilm(filmDto.getId()).forEach(like -> likeIds.add(like.getUserId()));
-            filmDto.setLikes(likeIds);
-            filmDto.setRate(likeIds.size());
-        }
 
         log.info("FilmService - Получено {} популярных фильмов", count);
         return popularMovies;
     }
 
-    private void validate(Integer filmId, Integer userId) {
+    public Collection<FilmDto> getCommonFilms(Integer userId, Integer friendId) {
+        log.info("FilmService - получение общих фильмов пользователей {} и {}.", userId, friendId);
+        return filmStorage.getCommonFilms(userId, friendId)
+                .stream().map(FilmMapper::mapToFilmDto).toList();
+    }
+
+    public Collection<FilmDto> getDirectorFilms(Integer directorId, String sortBy) {
+        log.info("FilmService - получение фильмов режиссера с id {}.", directorId);
+        return filmStorage.getDirectorFilms(directorId, sortBy)
+                .stream().map(FilmMapper::mapToFilmDto).toList();
+    }
+
+    public Collection<FilmDto> search(String query, String by) {
+        log.info("FilmService - поиск фиьмов по запросу {}.", query);
+        return filmStorage.search(query, by)
+                .stream().map(FilmMapper::mapToFilmDto).toList();
+    }
+
+    public void validate(Integer filmId, Integer userId) {
         log.info("FilmService - проверка в базе фильма с id - {} и пользователя с id - {}", filmId, userId);
         Optional<Film> film = filmStorage.getFilmById(filmId);
         if (film.isEmpty()) {
@@ -148,8 +157,8 @@ public class FilmService {
         }
     }
 
-    private FilmRequest updateMpaAndGenresForRequest(FilmRequest filmRequest) {
-        log.info("FilmService - установка MPA и жанров");
+    private FilmRequest updateFieldsForRequest(FilmRequest filmRequest) {
+        log.info("FilmService - установка MPA, жанров и режиссеров");
         validateRequest(filmRequest);
         if (filmRequest.getMpa() != null) {
             int mpaId = filmRequest.getMpa().getId();
@@ -160,7 +169,7 @@ public class FilmService {
         }
 
         if (filmRequest.getGenres() != null) {
-            Collection<Genre> genres = new ArrayList<>();
+            Set<Genre> genres = new LinkedHashSet<>();
             for (Genre genre : filmRequest.getGenres()) {
                 int genreId = genre.getId();
                 genres.add(genreRepository.getGenreById(genreId)
@@ -168,8 +177,21 @@ public class FilmService {
             }
             filmRequest.setGenres(genres);
         } else {
-            filmRequest.setGenres(new ArrayList<>());
+            filmRequest.setGenres(new HashSet<>());
         }
+
+        if (filmRequest.getDirectors() != null) {
+            Set<Director> directors = new LinkedHashSet<>();
+            for (Director director : filmRequest.getDirectors()) {
+                int directorId = director.getId();
+                directors.add(directorRepository.getDirectorById(directorId)
+                        .orElseThrow(() -> new ValidationException("Режиссер с id - " + directorId + " не найден")));
+            }
+            filmRequest.setDirectors(directors);
+        } else {
+            filmRequest.setDirectors(new HashSet<>());
+        }
+
         return filmRequest;
     }
 

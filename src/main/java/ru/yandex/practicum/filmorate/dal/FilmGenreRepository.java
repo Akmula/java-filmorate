@@ -1,17 +1,18 @@
 package ru.yandex.practicum.filmorate.dal;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.FilmGenre;
+import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.film.FilmGenreStorage;
 
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.HashSet;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Repository
@@ -72,19 +73,12 @@ public class FilmGenreRepository extends BaseRepository<FilmGenre> implements Fi
         log.info("FilmGenreRepository - Удалены жанры у фильма с id - {}", filmId);
     }
 
-    protected void batchUpdate(List<Integer> genreIds, Integer filmId) {
-        jdbcTemplate.batchUpdate(ADD_FILM_GENRE_QUERY, new BatchPreparedStatementSetter() {
-
-            @Override
-            public void setValues(PreparedStatement preparedStatement, int i) throws SQLException {
-                preparedStatement.setInt(1, filmId);
-                preparedStatement.setInt(2, genreIds.get(i));
-            }
-
-            @Override
-            public int getBatchSize() {
-                return genreIds.size();
-            }
-        });
+    protected void setGenresForFilm(Film film) {
+        if (film.getGenres() != null) {
+            HashSet<Integer> genreIds = film.getGenres().stream()
+                    .map(Genre::getId)
+                    .collect(Collectors.toCollection(HashSet::new));
+            batchUpdate(new ArrayList<>(genreIds), ADD_FILM_GENRE_QUERY, film.getId());
+        }
     }
 }
